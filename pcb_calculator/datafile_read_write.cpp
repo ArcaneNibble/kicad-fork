@@ -35,6 +35,7 @@
 #include <class_regulator_data.h>
 #include <datafile_read_write.h>
 #include <build_version.h>
+#include <standalone_scanf.h>
 
 
 using namespace PCBCALC_DATA_T;
@@ -52,9 +53,6 @@ bool PCB_CALCULATOR_FRAME::ReadDataFile()
 
     if( file == NULL )
         return false;
-
-    // Switch the locale to standard C (needed to read/write floating point numbers)
-    LOCALE_IO   toggle;
 
     PCB_CALCULATOR_DATAFILE * datafile = new PCB_CALCULATOR_DATAFILE( &m_RegulatorList );
 
@@ -86,9 +84,6 @@ bool PCB_CALCULATOR_FRAME::ReadDataFile()
 
 bool PCB_CALCULATOR_FRAME::WriteDataFile()
 {
-    // Switch the locale to standard C (needed to read/write floating point numbers)
-    LOCALE_IO   toggle;
-
     std::unique_ptr<PCB_CALCULATOR_DATAFILE>
                 datafile( new PCB_CALCULATOR_DATAFILE( &m_RegulatorList ) );
 
@@ -239,7 +234,7 @@ void PCB_CALCULATOR_DATAFILE_PARSER::ParseRegulatorDescr( PCB_CALCULATOR_DATAFIL
                     token = NextTok();
                     if( token != T_NUMBER )
                         Expecting( T_NUMBER );
-                    sscanf( CurText(), "%lf" , &vref);
+                    standalone_sscanf( CurText(), "%lf" , &vref);
                     NeedRIGHT();
                     break;
 
@@ -247,7 +242,7 @@ void PCB_CALCULATOR_DATAFILE_PARSER::ParseRegulatorDescr( PCB_CALCULATOR_DATAFIL
                     token = NextTok();
                     if( token != T_NUMBER )
                         Expecting( T_NUMBER );
-                    sscanf( CurText(), "%lf" , &iadj);
+                    standalone_sscanf( CurText(), "%lf" , &iadj);
                     NeedRIGHT();
                     break;
 

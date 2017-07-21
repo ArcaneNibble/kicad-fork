@@ -27,6 +27,7 @@
 #include <config.h> // HAVE_FGETC_NOLOCK
 
 #include <richio.h>
+#include <standalone_printf.h>
 
 
 // Fall back to getc() when getc_unlocked() is not available on the target platform.
@@ -46,7 +47,7 @@ static int vprint( std::string* result, const char* format, va_list ap )
     va_list tmp;
     va_copy( tmp, ap );
 
-    size_t  len = vsnprintf( msg, sizeof(msg), format, ap );
+    size_t  len = standalone_vsnprintf( msg, sizeof(msg), format, ap );
 
     if( len < sizeof(msg) )     // the output fit into msg
     {
@@ -61,7 +62,7 @@ static int vprint( std::string* result, const char* format, va_list ap )
 
         buf.reserve( len+1 );   // reserve(), not resize() which writes. +1 for trailing nul.
 
-        len = vsnprintf( &buf[0], len+1, format, tmp );
+        len = standalone_vsnprintf( &buf[0], len+1, format, tmp );
 
         result->append( &buf[0], &buf[0] + len );
     }
@@ -376,12 +377,12 @@ int OUTPUTFORMATTER::vprint( const char* fmt,  va_list ap )
     // we make a copy of va_list ap for the second call, if happens
     va_list tmp;
     va_copy( tmp, ap );
-    int ret = vsnprintf( &buffer[0], buffer.size(), fmt, ap );
+    int ret = standalone_vsnprintf( &buffer[0], buffer.size(), fmt, ap );
 
     if( ret >= (int) buffer.size() )
     {
         buffer.resize( ret + 1000 );
-        ret = vsnprintf( &buffer[0], buffer.size(), fmt, tmp );
+        ret = standalone_vsnprintf( &buffer[0], buffer.size(), fmt, tmp );
     }
 
     va_end( tmp );      // Release the temporary va_list, initialised from ap
