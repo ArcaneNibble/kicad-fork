@@ -35,6 +35,7 @@
 #include <worksheet_shape_builder.h>
 #include <class_worksheet_dataitem.h>
 #include <page_layout_reader_lexer.h>
+#include <standalone_scanf.h>
 
 
 using namespace TB_READER_T;
@@ -114,8 +115,6 @@ void PAGE_LAYOUT_READER_PARSER::Parse( WORKSHEET_LAYOUT* aLayout )
 {
     T token;
     WORKSHEET_DATAITEM * item;
-
-    LOCALE_IO toggle;
 
     while( ( token = NextTok() ) != T_RIGHT )
     {
@@ -730,7 +729,7 @@ int PAGE_LAYOUT_READER_PARSER::parseInt( int aMin, int aMax )
     if( token != T_NUMBER )
         Expecting( T_NUMBER );
 
-    int val = atoi( CurText() );
+    int val = standalone_strtol( CurText(), 0, 10 );
 
     if( val < aMin )
         val = aMin;
@@ -748,7 +747,7 @@ double PAGE_LAYOUT_READER_PARSER::parseDouble()
     if( token != T_NUMBER )
         Expecting( T_NUMBER );
 
-    double val = strtod( CurText(), NULL );
+    double val = standalone_strtod( CurText(), NULL );
 
     return val;
 }
