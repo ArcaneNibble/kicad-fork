@@ -126,8 +126,6 @@ bool DIALOG_PLOT_SCHEMATIC::plotOneSheetSVG( EDA_DRAW_FRAME*    aFrame,
         return false;
     }
 
-    LOCALE_IO   toggle;
-
     plotter->StartPlot();
 
     if( aPlotFrameRef )

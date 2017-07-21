@@ -99,6 +99,7 @@
 #include <plot_common.h>
 #include <macros.h>
 #include <kicad_string.h>
+#include <standalone_printf.h>
 
 
 
@@ -211,7 +212,7 @@ void SVG_PLOTTER::setSVGPlotStyle()
     fputs( "</g>\n<g style=\"", outputFile );
     fputs( "fill:#", outputFile );
     // output the background fill color
-    fprintf( outputFile, "%6.6lX; ", m_brush_rgb_color );
+    standalone_fprintf( outputFile, "%6.6lX; ", m_brush_rgb_color );
 
     switch( m_fillMode )
     {
@@ -229,12 +230,12 @@ void SVG_PLOTTER::setSVGPlotStyle()
     }
 
     double pen_w = userToDeviceSize( GetCurrentLineWidth() );
-    fprintf( outputFile, "\nstroke:#%6.6lX; stroke-width:%g; stroke-opacity:1; \n",
+    standalone_fprintf( outputFile, "\nstroke:#%6.6lX; stroke-width:%g; stroke-opacity:1; \n",
              m_pen_rgb_color, pen_w  );
     fputs( "stroke-linecap:round; stroke-linejoin:round;", outputFile );
 
     if( m_dashed )
-        fprintf( outputFile, "stroke-dasharray:%g,%g;",
+        standalone_fprintf( outputFile, "stroke-dasharray:%g,%g;",
                  GetDashMarkLenIU(), GetDashGapLenIU() );
 
     fputs( "\">\n", outputFile );
@@ -321,14 +322,14 @@ void SVG_PLOTTER::Rect( const wxPoint& p1, const wxPoint& p2, FILL_T fill, int w
     // Rectangles having a 0 size value for height or width are just not drawn on Inscape,
     // so use a line when happens.
     if( rect_dev.GetSize().x == 0.0 || rect_dev.GetSize().y == 0.0 )    // Draw a line
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                  "<line x1=\"%g\" y1=\"%g\" x2=\"%g\" y2=\"%g\" />\n",
                  rect_dev.GetPosition().x, rect_dev.GetPosition().y,
                  rect_dev.GetEnd().x, rect_dev.GetEnd().y
                  );
 
     else
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                  "<rect x=\"%g\" y=\"%g\" width=\"%g\" height=\"%g\" rx=\"%g\" />\n",
                  rect_dev.GetPosition().x, rect_dev.GetPosition().y,
                  rect_dev.GetSize().x, rect_dev.GetSize().y,
@@ -345,7 +346,7 @@ void SVG_PLOTTER::Circle( const wxPoint& pos, int diametre, FILL_T fill, int wid
     setFillMode( fill );
     SetCurrentLineWidth( width );
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<circle cx=\"%g\" cy=\"%g\" r=\"%g\" /> \n",
              pos_dev.x, pos_dev.y, radius );
 }
@@ -431,7 +432,7 @@ void SVG_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle, i
     // flag arc size (0 = small arc > 180 deg, 1 = large arc > 180 deg),
     // sweep arc ( 0 = CCW, 1 = CW),
     // end point
-    fprintf( outputFile, "<path d=\"M%g %g A%g %g 0.0 %d %d %g %g \" />\n",
+    standalone_fprintf( outputFile, "<path d=\"M%g %g A%g %g 0.0 %d %d %g %g \" />\n",
              start.x, start.y, radius_dev, radius_dev,
              flg_arc, flg_sweep,
              end.x, end.y  );
@@ -450,26 +451,26 @@ void SVG_PLOTTER::PlotPoly( const std::vector<wxPoint>& aCornerList,
     switch( aFill )
     {
     case NO_FILL:
-        fprintf( outputFile, "<polyline fill=\"none;\"\n" );
+        standalone_fprintf( outputFile, "<polyline fill=\"none;\"\n" );
         break;
 
     case FILLED_WITH_BG_BODYCOLOR:
     case FILLED_SHAPE:
-        fprintf( outputFile, "<polyline style=\"fill-rule:evenodd;\"\n" );
+        standalone_fprintf( outputFile, "<polyline style=\"fill-rule:evenodd;\"\n" );
         break;
     }
 
     DPOINT pos = userToDeviceCoordinates( aCornerList[0] );
-    fprintf( outputFile, "points=\"%d,%d\n", (int) pos.x, (int) pos.y );
+    standalone_fprintf( outputFile, "points=\"%d,%d\n", (int) pos.x, (int) pos.y );
 
     for( unsigned ii = 1; ii < aCornerList.size(); ii++ )
     {
         pos = userToDeviceCoordinates( aCornerList[ii] );
-        fprintf( outputFile, "%d,%d\n", (int) pos.x, (int) pos.y );
+        standalone_fprintf( outputFile, "%d,%d\n", (int) pos.x, (int) pos.y );
     }
 
     // Close/(fill) the path
-    fprintf( outputFile, "\" /> \n" );
+    standalone_fprintf( outputFile, "\" /> \n" );
 }
 
 
@@ -516,13 +517,13 @@ void SVG_PLOTTER::PenTo( const wxPoint& pos, char plume )
             setSVGPlotStyle();
         }
 
-        fprintf( outputFile, "<path d=\"M%d %d\n",
+        standalone_fprintf( outputFile, "<path d=\"M%d %d\n",
                  (int) pos_dev.x, (int) pos_dev.y );
     }
     else if( penState != plume || pos != penLastpos )
     {
         DPOINT pos_dev = userToDeviceCoordinates( pos );
-        fprintf( outputFile, "L%d %d\n",
+        standalone_fprintf( outputFile, "L%d %d\n",
                  (int) pos_dev.x, (int) pos_dev.y );
     }
 
@@ -557,7 +558,7 @@ bool SVG_PLOTTER::StartPlot()
 
     // Write viewport pos and size
     wxPoint origin;    // TODO set to actual value
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "    width=\"%gcm\" height=\"%gcm\" viewBox=\"%d %d %d %d \">\n",
              (double) paperSize.x / m_IUsPerDecimil * 2.54 / 10000,
              (double) paperSize.y / m_IUsPerDecimil * 2.54 / 10000,
@@ -568,19 +569,21 @@ bool SVG_PLOTTER::StartPlot()
     // Write title
     char    date_buf[250];
     time_t  ltime = time( NULL );
+    // Careful: strftime can be affected by locale. Fortunately, the formatting
+    // characters used here are not.
     strftime( date_buf, 250, "%Y/%m/%d %H:%M:%S",
               localtime( &ltime ) );
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<title>SVG Picture created as %s date %s </title>\n",
              TO_UTF8( XmlEsc( wxFileName( filename ).GetFullName() ) ), date_buf );
     // End of header
-    fprintf( outputFile, "  <desc>Picture generated by %s </desc>\n",
+    standalone_fprintf( outputFile, "  <desc>Picture generated by %s </desc>\n",
              TO_UTF8( XmlEsc( creator ) ) );
 
     // output the pen and brush color (RVB values in hex) and opacity
     double opacity = 1.0;      // 0.0 (transparent to 1.0 (solid)
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<g style=\"fill:#%6.6lX; fill-opacity:%g;stroke:#%6.6lX; stroke-opacity:%g;\n",
              m_brush_rgb_color, opacity, m_pen_rgb_color, opacity );
 
