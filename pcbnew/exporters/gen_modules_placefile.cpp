@@ -46,6 +46,7 @@
 #include <wildcards_and_files_ext.h>
 #include <kiface_i.h>
 #include <wx_html_report_panel.h>
+#include <standalone_printf.h>
 
 
 #include <dialog_gen_module_position_file_base.h>
@@ -500,15 +501,12 @@ int PCB_EDIT_FRAME::DoGenFootprintsPositionFile( const wxString& aFullFileName,
     if( list.size() > 1 )
         sort( list.begin(), list.end(), sortFPlist );
 
-    // Switch the locale to standard C (needed to print floating point numbers)
-    LOCALE_IO   toggle;
-
     if( aFormatCSV )
     {
         wxChar csv_sep = ',';
 
         // Set first line:;
-        fprintf( file, "Ref%cVal%cPackage%cPosX%cPosY%cRot%cSide\n",
+        standalone_fprintf( file, "Ref%cVal%cPackage%cPosX%cPosY%cRot%cSide\n",
                  csv_sep, csv_sep, csv_sep, csv_sep, csv_sep, csv_sep );
 
         for( int ii = 0; ii < footprintCount; ii++ )
@@ -544,10 +542,10 @@ int PCB_EDIT_FRAME::DoGenFootprintsPositionFile( const wxString& aFullFileName,
     else
     {
         // Write file header
-        fprintf( file, "### Module positions - created on %s ###\n", TO_UTF8( DateAndTime() ) );
+        standalone_fprintf( file, "### Module positions - created on %s ###\n", TO_UTF8( DateAndTime() ) );
 
         wxString Title = Pgm().App().GetAppName() + wxT( " " ) + GetBuildVersion();
-        fprintf( file, "### Printed by Pcbnew version %s\n", TO_UTF8( Title ) );
+        standalone_fprintf( file, "### Printed by Pcbnew version %s\n", TO_UTF8( Title ) );
 
         fputs( unit_text, file );
 
@@ -562,7 +560,7 @@ int PCB_EDIT_FRAME::DoGenFootprintsPositionFile( const wxString& aFullFileName,
 
         fputs( "\n", file );
 
-        fprintf(file, "%-*s  %-*s  %-*s  %9.9s  %9.9s  %8.8s  %s\n",
+        standalone_fprintf(file, "%-*s  %-*s  %-*s  %9.9s  %9.9s  %8.8s  %s\n",
                 int(lenRefText), "# Ref",
                 int(lenValText), "Val",
                 int(lenPkgText), "Package",
@@ -581,7 +579,7 @@ int PCB_EDIT_FRAME::DoGenFootprintsPositionFile( const wxString& aFullFileName,
             const wxString& val = list[ii].m_Value;
             const wxString  pkg = FROM_UTF8( list[ii].m_Module->GetFPID().GetLibItemName() );
 
-            fprintf(file, "%-*s  %-*s  %-*s  %9.4f  %9.4f  %8.4f  %s\n",
+            standalone_fprintf(file, "%-*s  %-*s  %-*s  %9.4f  %9.4f  %8.4f  %s\n",
                     lenRefText, TO_UTF8( ref ),
                     lenValText, TO_UTF8( val ),
                     lenPkgText, TO_UTF8( pkg ),
@@ -653,13 +651,11 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
     double conv_unit = aUnitsMM ? conv_unit_mm : conv_unit_inch;
     const char *unit_text = aUnitsMM ? unit_text_mm : unit_text_inch;
 
-    LOCALE_IO   toggle;
-
     // Generate header file comments.)
-    fprintf( rptfile, "## Footprint report - date %s\n", TO_UTF8( DateAndTime() ) );
+    standalone_fprintf( rptfile, "## Footprint report - date %s\n", TO_UTF8( DateAndTime() ) );
 
     wxString Title = Pgm().App().GetAppName() + wxT( " " ) + GetBuildVersion();
-    fprintf( rptfile, "## Created by Pcbnew version %s\n", TO_UTF8( Title ) );
+    standalone_fprintf( rptfile, "## Created by Pcbnew version %s\n", TO_UTF8( Title ) );
     fputs( unit_text, rptfile );
 
     fputs( "\n$BeginDESCRIPTION\n", rptfile );
@@ -668,11 +664,11 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
 
     fputs( "\n$BOARD\n", rptfile );
 
-    fprintf( rptfile, "upper_left_corner %9.6f %9.6f\n",
+    standalone_fprintf( rptfile, "upper_left_corner %9.6f %9.6f\n",
              bbbox.GetX() * conv_unit,
              bbbox.GetY() * conv_unit );
 
-    fprintf( rptfile, "lower_right_corner %9.6f %9.6f\n",
+    standalone_fprintf( rptfile, "lower_right_corner %9.6f %9.6f\n",
              bbbox.GetRight()  * conv_unit,
              bbbox.GetBottom() * conv_unit );
 
@@ -680,11 +676,11 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
 
     for( MODULE* Module = GetBoard()->m_Modules;  Module;  Module = Module->Next() )
     {
-        fprintf( rptfile, "$MODULE %s\n", EscapedUTF8( Module->GetReference() ).c_str() );
+        standalone_fprintf( rptfile, "$MODULE %s\n", EscapedUTF8( Module->GetReference() ).c_str() );
 
-        fprintf( rptfile, "reference %s\n", EscapedUTF8( Module->GetReference() ).c_str() );
-        fprintf( rptfile, "value %s\n", EscapedUTF8( Module->GetValue() ).c_str() );
-        fprintf( rptfile, "footprint %s\n",
+        standalone_fprintf( rptfile, "reference %s\n", EscapedUTF8( Module->GetReference() ).c_str() );
+        standalone_fprintf( rptfile, "value %s\n", EscapedUTF8( Module->GetValue() ).c_str() );
+        standalone_fprintf( rptfile, "footprint %s\n",
                  EscapedUTF8( FROM_UTF8( Module->GetFPID().Format().c_str() ) ).c_str() );
 
         msg = wxT( "attribut" );
@@ -705,7 +701,7 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
         module_pos.x -= File_Place_Offset.x;
         module_pos.y -= File_Place_Offset.y;
 
-        fprintf( rptfile, "position %9.6f %9.6f  orientation %.2f\n",
+        standalone_fprintf( rptfile, "position %9.6f %9.6f  orientation %.2f\n",
                  module_pos.x * conv_unit,
                  module_pos.y * conv_unit,
                  Module->GetOrientation() / 10.0 );
@@ -719,7 +715,7 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
 
         for( D_PAD* pad = Module->PadsList(); pad != NULL; pad = pad->Next() )
         {
-            fprintf( rptfile, "$PAD \"%s\"\n", TO_UTF8( pad->GetPadName() ) );
+            standalone_fprintf( rptfile, "$PAD \"%s\"\n", TO_UTF8( pad->GetPadName() ) );
             int layer = 0;
 
             if( pad->GetLayerSet()[B_Cu] )
@@ -729,23 +725,23 @@ bool PCB_EDIT_FRAME::DoGenFootprintsReport( const wxString& aFullFilename, bool 
                 layer |= 2;
 
             static const char* layer_name[4] = { "nocopper", "back", "front", "both" };
-            fprintf( rptfile, "Shape %s Layer %s\n", TO_UTF8( pad->ShowPadShape() ), layer_name[layer] );
+            standalone_fprintf( rptfile, "Shape %s Layer %s\n", TO_UTF8( pad->ShowPadShape() ), layer_name[layer] );
 
-            fprintf( rptfile, "position %9.6f %9.6f  size %9.6f %9.6f  orientation %.2f\n",
+            standalone_fprintf( rptfile, "position %9.6f %9.6f  size %9.6f %9.6f  orientation %.2f\n",
                      pad->GetPos0().x * conv_unit, pad->GetPos0().y * conv_unit,
                      pad->GetSize().x * conv_unit, pad->GetSize().y * conv_unit,
                      (pad->GetOrientation() - Module->GetOrientation()) / 10.0 );
 
-            fprintf( rptfile, "drill %9.6f\n", pad->GetDrillSize().x * conv_unit );
+            standalone_fprintf( rptfile, "drill %9.6f\n", pad->GetDrillSize().x * conv_unit );
 
-            fprintf( rptfile, "shape_offset %9.6f %9.6f\n",
+            standalone_fprintf( rptfile, "shape_offset %9.6f %9.6f\n",
                      pad->GetOffset().x * conv_unit,
                      pad->GetOffset().y * conv_unit );
 
-            fprintf( rptfile, "$EndPAD\n" );
+            standalone_fprintf( rptfile, "$EndPAD\n" );
         }
 
-        fprintf( rptfile, "$EndMODULE  %s\n\n", TO_UTF8 (Module->GetReference() ) );
+        standalone_fprintf( rptfile, "$EndMODULE  %s\n\n", TO_UTF8 (Module->GetReference() ) );
     }
 
     // Generate EOF.
