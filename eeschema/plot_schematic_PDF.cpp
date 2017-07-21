@@ -67,7 +67,6 @@ void DIALOG_PLOT_SCHEMATIC::createPDFFile( bool aPlotAll, bool aPlotFrameRef )
     wxString msg;
     wxFileName plotFileName;
     REPORTER& reporter = m_MessagesBox->Reporter();
-    LOCALE_IO toggle;       // Switch the locale to standard C
 
     for( unsigned i = 0; i < sheetList.size(); i++ )
     {

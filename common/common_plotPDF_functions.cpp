@@ -38,6 +38,7 @@
 #include <kicad_string.h>
 #include <wx/zstream.h>
 #include <wx/mstream.h>
+#include <standalone_printf.h>
 
 
 /*
@@ -105,7 +106,7 @@ void PDF_PLOTTER::SetCurrentLineWidth( int width, void* aData )
         pen_width = defaultPenWidth;
 
     if( pen_width != currentPenWidth )
-        fprintf( workFile, "%g w\n",
+        standalone_fprintf( workFile, "%g w\n",
                  userToDeviceSize( pen_width ) );
 
     currentPenWidth = pen_width;
@@ -124,7 +125,7 @@ void PDF_PLOTTER::SetCurrentLineWidth( int width, void* aData )
 void PDF_PLOTTER::emitSetRGBColor( double r, double g, double b )
 {
     wxASSERT( workFile );
-    fprintf( workFile, "%g %g %g rg %g %g %g RG\n",
+    standalone_fprintf( workFile, "%g %g %g rg %g %g %g RG\n",
              r, g, b, r, g, b );
 }
 
@@ -135,7 +136,7 @@ void PDF_PLOTTER::SetDash( bool dashed )
 {
     wxASSERT( workFile );
     if( dashed )
-        fprintf( workFile, "[%d %d] 0 d\n",
+        standalone_fprintf( workFile, "[%d %d] 0 d\n",
                  (int) GetDashMarkLenIU(), (int) GetDashGapLenIU() );
     else
         fputs( "[] 0 d\n", workFile );
@@ -152,7 +153,7 @@ void PDF_PLOTTER::Rect( const wxPoint& p1, const wxPoint& p2, FILL_T fill, int w
     DPOINT p2_dev = userToDeviceCoordinates( p2 );
 
     SetCurrentLineWidth( width );
-    fprintf( workFile, "%g %g %g %g re %c\n", p1_dev.x, p1_dev.y,
+    standalone_fprintf( workFile, "%g %g %g %g re %c\n", p1_dev.x, p1_dev.y,
              p2_dev.x - p1_dev.x, p2_dev.y - p1_dev.y,
              fill == NO_FILL ? 'S' : 'B' );
 }
@@ -177,7 +178,7 @@ void PDF_PLOTTER::Circle( const wxPoint& pos, int diametre, FILL_T aFill, int wi
     double magic = radius * 0.551784; // You don't want to know where this come from
 
     // This is the convex hull for the bezier approximated circle
-    fprintf( workFile, "%g %g m "
+    standalone_fprintf( workFile, "%g %g m "
                        "%g %g %g %g %g %g c "
                        "%g %g %g %g %g %g c "
                        "%g %g %g %g %g %g c "
@@ -229,19 +230,19 @@ void PDF_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle, i
     start.x = centre.x + KiROUND( cosdecideg( radius, -StAngle ) );
     start.y = centre.y + KiROUND( sindecideg( radius, -StAngle ) );
     DPOINT pos_dev = userToDeviceCoordinates( start );
-    fprintf( workFile, "%g %g m ", pos_dev.x, pos_dev.y );
+    standalone_fprintf( workFile, "%g %g m ", pos_dev.x, pos_dev.y );
     for( int ii = StAngle + delta; ii < EndAngle; ii += delta )
     {
         end.x = centre.x + KiROUND( cosdecideg( radius, -ii ) );
         end.y = centre.y + KiROUND( sindecideg( radius, -ii ) );
         pos_dev = userToDeviceCoordinates( end );
-        fprintf( workFile, "%g %g l ", pos_dev.x, pos_dev.y );
+        standalone_fprintf( workFile, "%g %g l ", pos_dev.x, pos_dev.y );
     }
 
     end.x = centre.x + KiROUND( cosdecideg( radius, -EndAngle ) );
     end.y = centre.y + KiROUND( sindecideg( radius, -EndAngle ) );
     pos_dev = userToDeviceCoordinates( end );
-    fprintf( workFile, "%g %g l ", pos_dev.x, pos_dev.y );
+    standalone_fprintf( workFile, "%g %g l ", pos_dev.x, pos_dev.y );
 
     // The arc is drawn... if not filled we stroke it, otherwise we finish
     // closing the pie at the center
@@ -252,7 +253,7 @@ void PDF_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle, i
     else
     {
         pos_dev = userToDeviceCoordinates( centre );
-        fprintf( workFile, "%g %g l b\n", pos_dev.x, pos_dev.y );
+        standalone_fprintf( workFile, "%g %g l b\n", pos_dev.x, pos_dev.y );
     }
 }
 
@@ -270,16 +271,16 @@ void PDF_PLOTTER::PlotPoly( const std::vector< wxPoint >& aCornerList,
     SetCurrentLineWidth( aWidth );
 
     DPOINT pos = userToDeviceCoordinates( aCornerList[0] );
-    fprintf( workFile, "%g %g m\n", pos.x, pos.y );
+    standalone_fprintf( workFile, "%g %g m\n", pos.x, pos.y );
 
     for( unsigned ii = 1; ii < aCornerList.size(); ii++ )
     {
         pos = userToDeviceCoordinates( aCornerList[ii] );
-        fprintf( workFile, "%g %g l\n", pos.x, pos.y );
+        standalone_fprintf( workFile, "%g %g l\n", pos.x, pos.y );
     }
 
     // Close path and stroke(/fill)
-    fprintf( workFile, "%c\n", aFill == NO_FILL ? 'S' : 'b' );
+    standalone_fprintf( workFile, "%c\n", aFill == NO_FILL ? 'S' : 'b' );
 }
 
 
@@ -301,7 +302,7 @@ void PDF_PLOTTER::PenTo( const wxPoint& pos, char plume )
     if( penState != plume || pos != penLastpos )
     {
         DPOINT pos_dev = userToDeviceCoordinates( pos );
-        fprintf( workFile, "%g %g %c\n",
+        standalone_fprintf( workFile, "%g %g %c\n",
                  pos_dev.x, pos_dev.y,
                  ( plume=='D' ) ? 'l' : 'm' );
     }
@@ -338,7 +339,7 @@ void PDF_PLOTTER::PlotImage( const wxImage & aImage, const wxPoint& aPos,
        3) restore the CTM
        4) profit
      */
-    fprintf( workFile, "q %g 0 0 %g %g %g cm\n", // Step 1
+    standalone_fprintf( workFile, "q %g 0 0 %g %g %g cm\n", // Step 1
             userToDeviceSize( drawsize.x ),
             userToDeviceSize( drawsize.y ),
             dev_start.x, dev_start.y );
@@ -347,7 +348,7 @@ void PDF_PLOTTER::PlotImage( const wxImage & aImage, const wxPoint& aPos,
        A real ugly construct (compared with the elegance of the PDF
        format). Also it accepts some 'abbreviations', which is stupid
        since the content stream is usually compressed anyway... */
-    fprintf( workFile,
+    standalone_fprintf( workFile,
              "BI\n"
              "  /BPC 8\n"
              "  /CS %s\n"
@@ -408,7 +409,7 @@ int PDF_PLOTTER::startPdfObject(int handle)
         handle = allocPdfObject();
 
     xrefTable[handle] = ftell( outputFile );
-    fprintf( outputFile, "%d 0 obj\n", handle );
+    standalone_fprintf( outputFile, "%d 0 obj\n", handle );
     return handle;
 }
 
@@ -439,7 +440,7 @@ int PDF_PLOTTER::startPdfStream(int handle)
     // This is guaranteed to be handle+1 but needs to be allocated since
     // you could allocate more object during stream preparation
     streamLengthHandle = allocPdfObject();
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<< /Length %d 0 R /Filter /FlateDecode >>\n" // Length is deferred
              "stream\n", handle + 1 );
 
@@ -509,7 +510,7 @@ void PDF_PLOTTER::closePdfStream()
 
     // Writing the deferred length as an indirect object
     startPdfObject( streamLengthHandle );
-    fprintf( outputFile, "%u\n", out_count );
+    standalone_fprintf( outputFile, "%u\n", out_count );
     closePdfObject();
 }
 
@@ -533,7 +534,7 @@ void PDF_PLOTTER::StartPage()
        compressed later in closePdfStream */
 
     // Default graphic settings (coordinate system, default color and line style)
-    fprintf( workFile,
+    standalone_fprintf( workFile,
              "%g 0 0 %g 0 0 cm 1 J 1 j 0 0 0 rg 0 0 0 RG %g w\n",
              0.0072 * plotScaleAdjX, 0.0072 * plotScaleAdjY,
              userToDeviceSize( defaultPenWidth ) );
@@ -561,7 +562,7 @@ void PDF_PLOTTER::ClosePage()
     const double BIGPTsPERMIL = 0.072;
     wxSize psPaperSize = pageInfo.GetSizeMils();
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<<\n"
              "/Type /Page\n"
              "/Parent %d 0 R\n"
@@ -643,7 +644,7 @@ bool PDF_PLOTTER::EndPlot()
     for( int i = 0; i < 4; i++ )
     {
         fontdefs[i].font_handle = startPdfObject();
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                  "<< /BaseFont %s\n"
                  "   /Type /Font\n"
                  "   /Subtype /Type1\n"
@@ -661,7 +662,7 @@ bool PDF_PLOTTER::EndPlot()
     fputs( "<<\n", outputFile );
     for( int i = 0; i < 4; i++ )
     {
-        fprintf( outputFile, "    %s %d 0 R\n",
+        standalone_fprintf( outputFile, "    %s %d 0 R\n",
                 fontdefs[i].rsname, fontdefs[i].font_handle );
     }
     fputs( ">>\n", outputFile );
@@ -676,9 +677,9 @@ bool PDF_PLOTTER::EndPlot()
            "/Kids [\n", outputFile );
 
     for( unsigned i = 0; i < pageHandles.size(); i++ )
-        fprintf( outputFile, "%d 0 R\n", pageHandles[i] );
+        standalone_fprintf( outputFile, "%d 0 R\n", pageHandles[i] );
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
             "]\n"
             "/Count %ld\n"
              ">>\n", (long) pageHandles.size() );
@@ -699,7 +700,7 @@ bool PDF_PLOTTER::EndPlot()
         title = title.AfterLast('/');
     }
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<<\n"
              "/Producer (KiCAD PDF)\n"
              "/CreationDate (%s)\n"
@@ -715,7 +716,7 @@ bool PDF_PLOTTER::EndPlot()
 
     // The catalog, at last
     int catalogHandle = startPdfObject();
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "<<\n"
              "/Type /Catalog\n"
              "/Pages %d 0 R\n"
@@ -729,17 +730,17 @@ bool PDF_PLOTTER::EndPlot()
        be 20 bytes long, and object zero must be done in that way). Also
        the offset must be kept along for the trailer */
     long xref_start = ftell( outputFile );
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "xref\n"
              "0 %ld\n"
              "0000000000 65535 f \n", (long) xrefTable.size() );
     for( unsigned i = 1; i < xrefTable.size(); i++ )
     {
-        fprintf( outputFile, "%010ld 00000 n \n", xrefTable[i] );
+        standalone_fprintf( outputFile, "%010ld 00000 n \n", xrefTable[i] );
     }
 
     // Done the xref, go for the trailer
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "trailer\n"
              "<< /Size %lu /Root %d 0 R /Info %d 0 R >>\n"
              "startxref\n"
@@ -796,7 +797,7 @@ void PDF_PLOTTER::Text( const wxPoint&              aPos,
            for the trig part of the matrix to avoid %g going in exponential
            format (which is not supported)
            Rendermode 0 shows the text, rendermode 3 is invisible */
-        fprintf( workFile, "q %f %f %f %f %g %g cm BT %s %g Tf %d Tr %g Tz ",
+        standalone_fprintf( workFile, "q %f %f %f %f %g %g cm BT %s %g Tf %d Tr %g Tz ",
                 ctm_a, ctm_b, ctm_c, ctm_d, ctm_e, ctm_f,
                 fontname, heightFactor,
                 (m_textMode == PLOTTEXTMODE_NATIVE) ? 0 : 3,
@@ -821,7 +822,7 @@ void PDF_PLOTTER::Text( const wxPoint&              aPos,
                    is the right function to use here... */
                 DPOINT dev_from = userToDeviceSize( wxSize( pos_pairs[i], overbar_y ) );
                 DPOINT dev_to = userToDeviceSize( wxSize( pos_pairs[i + 1], overbar_y ) );
-                fprintf( workFile, "%g %g m %g %g l ",
+                standalone_fprintf( workFile, "%g %g m %g %g l ",
                         dev_from.x, dev_from.y, dev_to.x, dev_to.y );
             }
         }
