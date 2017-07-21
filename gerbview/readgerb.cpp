@@ -107,8 +107,6 @@ bool GERBER_FILE_IMAGE::LoadGerberFile( const wxString& aFullFileName )
     if( path != wxEmptyString )
         wxSetWorkingDirectory( path );
 
-    LOCALE_IO toggleIo;
-
     wxString msg;
 
     while( true )

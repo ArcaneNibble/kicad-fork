@@ -27,6 +27,7 @@
 
 #include <class_gerber_file_image.h>
 #include <base_units.h>
+#include <standalone_scanf.h>
 
 
 /* These routines read the text string point from Text.
@@ -278,9 +279,9 @@ int ReadInt( char*& text, bool aSkipSeparator = true )
         ret = 0;
     }
     else
-        ret = (int) strtol( text, &text, 10 );
+        ret = (int) standalone_strtol( text, &text, 10 );
 
-    if( *text == ',' || isspace( *text ) )
+    if( *text == ',' || IsASCIISpace( *text ) )
     {
         if( aSkipSeparator )
             ++text;
@@ -312,9 +313,9 @@ double ReadDouble( char*& text, bool aSkipSeparator = true )
         ret = 0.0;
     }
     else
-        ret = strtod( text, &text );
+        ret = standalone_strtod( text, &text );
 
-    if( *text == ',' || isspace( *text ) )
+    if( *text == ',' || IsASCIISpace( *text ) )
     {
         if( aSkipSeparator )
             ++text;

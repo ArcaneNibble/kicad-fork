@@ -36,6 +36,8 @@
 // An useful macro used when reading gerber files;
 #define IsNumber( x ) ( ( ( (x) >= '0' ) && ( (x) <='9' ) )   \
                        || ( (x) == '-' ) || ( (x) == '+' )  || ( (x) == '.' ) )
+#define IsASCIIDigit(a) (((unsigned)(a)-'0') < 10)
+#define IsASCIISpace(a) ((a) == ' ' || (unsigned)(a)-'\t' < 5)
 
 class GERBVIEW_FRAME;
 class D_CODE;

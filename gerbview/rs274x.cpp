@@ -907,7 +907,7 @@ bool GERBER_FILE_IMAGE::ExecuteRS274XCommand( int command, char* buff, char*& te
                     double param = ReadDouble( text );
                     dcode->AppendParam( param );
 
-                    while( isspace( *text ) )
+                    while( IsASCIISpace( *text ) )
                         text++;
 
                     // Skip 'X' separator:
@@ -1066,7 +1066,7 @@ bool GERBER_FILE_IMAGE::ReadApertureMacro( char *buff,
             param.ReadParam( text );
             continue;
         }
-        else if( !isdigit(*text)  )     // Ill. symbol
+        else if( !IsASCIIDigit(*text)  )     // Ill. symbol
         {
             msg.Printf( wxT( "RS274X: Aperture Macro \"%s\": ill. symbol, line: \"%s\"" ),
                         GetChars( am.name ), GetChars( FROM_UTF8( buff ) ) );
