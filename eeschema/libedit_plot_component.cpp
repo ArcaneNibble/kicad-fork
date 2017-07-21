@@ -167,8 +167,6 @@ void LIB_EDIT_FRAME::SVG_PlotComponent( const wxString& aFullFileName )
         return;
     }
 
-    LOCALE_IO   toggle;
-
     plotter->StartPlot();
 
     LIB_PART*      part = GetCurPart();

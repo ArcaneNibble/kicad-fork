@@ -31,6 +31,14 @@
 #include <wx/numformatter.h>
 #include <confirm.h>
 #include <common.h>
+#include <standalone_scanf.h>
+
+#define ascii_isupper(a) (((unsigned)(a)-'A') < 26)
+int ascii_tolower(int c)
+{
+    if (ascii_isupper(c)) return c | 32;
+    return c;
+}
 
 SPICE_VALUE::SPICE_VALUE( const wxString& aString )
 {
@@ -39,9 +47,7 @@ SPICE_VALUE::SPICE_VALUE( const wxString& aString )
     if( aString.IsEmpty() )
         throw std::invalid_argument( "Spice value cannot be empty" );
 
-    LOCALE_IO dummy;    // All numeric values should be in "C" locale(decimal separator = .)
-
-    if( sscanf( (const char*) aString.c_str(), "%lf%7s", &m_base, buf ) == 0 )
+    if( standalone_sscanf( (const char*) aString.c_str(), "%lf%7s", &m_base, buf ) == 0 )
         throw std::invalid_argument( "Invalid Spice value string" );
 
     if( *buf == 0 )
@@ -55,7 +61,7 @@ SPICE_VALUE::SPICE_VALUE( const wxString& aString )
     m_spiceStr = true;
 
     for( char* bufPtr = buf; *bufPtr; ++bufPtr )
-        *bufPtr = tolower( *bufPtr );
+        *bufPtr = ascii_tolower( *bufPtr );
 
     if( !strcmp( buf, "meg" ) )
     {
