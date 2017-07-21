@@ -127,8 +127,6 @@ bool DIALOG_PLOT_SCHEMATIC::PlotOneSheetDXF( const wxString&    aFileName,
         return false;
     }
 
-    LOCALE_IO   toggle;
-
     plotter->StartPlot();
 
     if( aPlotFrameRef )

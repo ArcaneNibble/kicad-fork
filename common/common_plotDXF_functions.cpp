@@ -35,6 +35,7 @@
 #include <macros.h>
 #include <kicad_string.h>
 #include <convert_basic_shapes_to_polygon.h>
+#include <standalone_printf.h>
 
 /**
  * Oblique angle for DXF native text
@@ -203,7 +204,7 @@ bool DXF_PLOTTER::StartPlot()
     static const char *style_name[4] = {"KICAD", "KICADB", "KICADI", "KICADBI"};
     for(int i = 0; i < 4; i++ )
     {
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                  "  0\n"
                  "STYLE\n"
                  "  2\n"
@@ -230,7 +231,7 @@ bool DXF_PLOTTER::StartPlot()
 
 
     // Layer table - one layer per color
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "  0\n"
              "ENDTAB\n"
              "  0\n"
@@ -249,7 +250,7 @@ bool DXF_PLOTTER::StartPlot()
 
     for( EDA_COLOR_T i = BLACK; i < NBCOLORS; i = NextColor(i) )
     {
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                  "  0\n"
                  "LAYER\n"
                  "  2\n"
@@ -339,7 +340,7 @@ void DXF_PLOTTER::Circle( const wxPoint& centre, int diameter, FILL_T fill, int 
 
         if( !fill )
         {
-            fprintf( outputFile, "0\nCIRCLE\n8\n%s\n10\n%g\n20\n%g\n40\n%g\n",
+            standalone_fprintf( outputFile, "0\nCIRCLE\n8\n%s\n10\n%g\n20\n%g\n40\n%g\n",
                     TO_UTF8( cname ),
                     centre_dev.x, centre_dev.y, radius );
         }
@@ -347,16 +348,16 @@ void DXF_PLOTTER::Circle( const wxPoint& centre, int diameter, FILL_T fill, int 
         if( fill == FILLED_SHAPE )
         {
             double r = radius*0.5;
-            fprintf( outputFile, "0\nPOLYLINE\n");
-            fprintf( outputFile, "8\n%s\n66\n1\n70\n1\n", TO_UTF8( cname ));
-            fprintf( outputFile, "40\n%g\n41\n%g\n", radius, radius);
-            fprintf( outputFile, "0\nVERTEX\n8\n%s\n", TO_UTF8( cname ));
-            fprintf( outputFile, "10\n%g\n 20\n%g\n42\n1.0\n",
+            standalone_fprintf( outputFile, "0\nPOLYLINE\n");
+            standalone_fprintf( outputFile, "8\n%s\n66\n1\n70\n1\n", TO_UTF8( cname ));
+            standalone_fprintf( outputFile, "40\n%g\n41\n%g\n", radius, radius);
+            standalone_fprintf( outputFile, "0\nVERTEX\n8\n%s\n", TO_UTF8( cname ));
+            standalone_fprintf( outputFile, "10\n%g\n 20\n%g\n42\n1.0\n",
                     centre_dev.x-r, centre_dev.y );
-            fprintf( outputFile, "0\nVERTEX\n8\n%s\n", TO_UTF8( cname ));
-            fprintf( outputFile, "10\n%g\n 20\n%g\n42\n1.0\n",
+            standalone_fprintf( outputFile, "0\nVERTEX\n8\n%s\n", TO_UTF8( cname ));
+            standalone_fprintf( outputFile, "10\n%g\n 20\n%g\n42\n1.0\n",
                     centre_dev.x+r, centre_dev.y );
-            fprintf( outputFile, "0\nSEQEND\n");
+            standalone_fprintf( outputFile, "0\nSEQEND\n");
         }
     }
 }
@@ -485,7 +486,7 @@ void DXF_PLOTTER::PenTo( const wxPoint& pos, char plume )
     {
         // DXF LINE
         wxString cname = getDXFColorName( m_currentColor );
-        fprintf( outputFile, "0\nLINE\n8\n%s\n10\n%g\n20\n%g\n11\n%g\n21\n%g\n",
+        standalone_fprintf( outputFile, "0\nLINE\n8\n%s\n10\n%g\n20\n%g\n11\n%g\n21\n%g\n",
                  TO_UTF8( cname ),
                  pen_lastpos_dev.x, pen_lastpos_dev.y, pos_dev.x, pos_dev.y );
     }
@@ -533,7 +534,7 @@ void DXF_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle, i
 
     // Emit a DXF ARC entity
     wxString cname = getDXFColorName( m_currentColor );
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "0\nARC\n8\n%s\n10\n%g\n20\n%g\n40\n%g\n50\n%g\n51\n%g\n",
              TO_UTF8( cname ),
              centre_dev.x, centre_dev.y, radius_dev,
@@ -783,7 +784,7 @@ void DXF_PLOTTER::Text( const wxPoint&              aPos,
         // Position, size, rotation and alignment
         // The two alignment point usages is somewhat idiot (see the DXF ref)
         // Anyway since we don't use the fit/aligned options, they're the same
-        fprintf( outputFile,
+        standalone_fprintf( outputFile,
                 "  0\n"
                 "TEXT\n"
                 "  7\n"
