@@ -292,6 +292,7 @@ set( COMMON_SRCS
     zoom.cpp
     wtfnicode.c
     standalone_printf.c
+    standalone_printf_extra.cpp
     standalone_scanf.c
     )
 
