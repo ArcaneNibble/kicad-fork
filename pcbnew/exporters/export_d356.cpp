@@ -36,6 +36,7 @@
 #include <trigo.h>
 #include <build_version.h>
 #include <macros.h>
+#include <standalone_printf.h>
 
 #include <pcbnew.h>
 
@@ -317,7 +318,7 @@ static void write_D356_records( std::vector <D356_RECORD> &aRecords,
         }
 
         // Operation code, signal and component
-        fprintf( fout, "%03d%-14.14s   %-6.6s%c%-4.4s%c",
+        standalone_fprintf( fout, "%03d%-14.14s   %-6.6s%c%-4.4s%c",
                  rktype, TO_UTF8(d356_net),
                  TO_UTF8(rk.refdes),
                  rk.pin.empty()?' ':'-',
@@ -327,15 +328,15 @@ static void write_D356_records( std::vector <D356_RECORD> &aRecords,
         // Hole definition
         if( rk.hole )
         {
-            fprintf( fout, "D%04d%c",
+            standalone_fprintf( fout, "D%04d%c",
                      iu_to_d356( rk.drill, 9999 ),
                      rk.mechanical ? 'U':'P' );
         }
         else
-            fprintf( fout, "      " );
+            standalone_fprintf( fout, "      " );
 
         // Test point access
-        fprintf( fout, "A%02dX%+07dY%+07dX%04dY%04dR%03d",
+        standalone_fprintf( fout, "A%02dX%+07dY%+07dX%04dY%04dR%03d",
                 rk.access,
                 iu_to_d356( rk.x_location, 999999 ),
                 iu_to_d356( rk.y_location, 999999 ),
@@ -344,7 +345,7 @@ static void write_D356_records( std::vector <D356_RECORD> &aRecords,
                 rk.rotation );
 
         // Soldermask
-        fprintf( fout, "S%d\n", rk.soldermask );
+        standalone_fprintf( fout, "S%d\n", rk.soldermask );
     }
 }
 
@@ -374,8 +375,6 @@ void PCB_EDIT_FRAME::GenD356File( wxCommandEvent& aEvent )
         DisplayError( this, msg ); return;
     }
 
-    LOCALE_IO       toggle;     // Switch the locale to standard C
-
     // This will contain everything needed for the 356 file
     std::vector <D356_RECORD> d356_records;
     BOARD* pcb = GetBoard();
@@ -386,11 +385,11 @@ void PCB_EDIT_FRAME::GenD356File( wxCommandEvent& aEvent )
 
     // Code 00 AFAIK is ASCII, CUST 0 is decimils/degrees
     // CUST 1 would be metric but gerbtool simply ignores it!
-    fprintf( file, "P  CODE 00\n" );
-    fprintf( file, "P  UNITS CUST 0\n" );
-    fprintf( file, "P  DIM   N\n" );
+    standalone_fprintf( file, "P  CODE 00\n" );
+    standalone_fprintf( file, "P  UNITS CUST 0\n" );
+    standalone_fprintf( file, "P  DIM   N\n" );
     write_D356_records( d356_records, file );
-    fprintf( file, "999\n" );
+    standalone_fprintf( file, "999\n" );
 
     fclose( file );
 }
