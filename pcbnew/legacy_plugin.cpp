@@ -87,6 +87,8 @@
 #include <convert_to_biu.h>
 #include <trigo.h>
 #include <build_version.h>
+#include <standalone_printf.h>
+#include <standalone_scanf.h>
 
 
 typedef LEGACY_PLUGIN::BIU      BIU;
@@ -360,7 +362,7 @@ LSET LEGACY_PLUGIN::leg_mask2new( int cu_count, unsigned aMask )
 static inline int intParse( const char* next, const char** out = NULL )
 {
     // please just compile this and be quiet, hide casting ugliness:
-    return (int) strtol( next, (char**) out, 10 );
+    return (int) standalone_strtol( next, (char**) out, 10 );
 }
 
 /**
@@ -382,15 +384,13 @@ static inline LAYER_NUM layerParse( const char* next, const char** out = NULL )
 static inline long hexParse( const char* next, const char** out = NULL )
 {
     // please just compile this and be quiet, hide casting ugliness:
-    return strtol( next, (char**) out, 16 );
+    return standalone_strtol( next, (char**) out, 16 );
 }
 
 
 BOARD* LEGACY_PLUGIN::Load( const wxString& aFileName, BOARD* aAppendToMe,
         const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     init( aProperties );
 
     m_board = aAppendToMe ? aAppendToMe : new BOARD();
@@ -545,7 +545,7 @@ void LEGACY_PLUGIN::checkVersion()
     }
 
     int ver = 1;    // if sccanf fails
-    sscanf( line, "PCBNEW-BOARD Version %d", &ver );
+    standalone_sscanf( line, "PCBNEW-BOARD Version %d", &ver );
 
 #if !defined(DEBUG)
     if( ver > LEGACY_BOARD_FILE_VERSION )
@@ -1087,7 +1087,7 @@ void LEGACY_PLUGIN::loadSETUP()
 
         else if( TESTLINE( "Pad2PasteClearanceRatio" ) )
         {
-            double ratio = atof( line + SZ( "Pad2PasteClearanceRatio" ) );
+            double ratio = standalone_strtod( line + SZ( "Pad2PasteClearanceRatio" ), 0 );
             bds.m_SolderPasteMarginRatio = ratio;
         }
 
@@ -1315,7 +1315,7 @@ void LEGACY_PLUGIN::loadMODULE( MODULE* aModule )
 
         else if( TESTLINE( ".SolderPasteRatio" ) )
         {
-            double tmp = atof( line + SZ( ".SolderPasteRatio" ) );
+            double tmp = standalone_strtod( line + SZ( ".SolderPasteRatio" ), 0 );
             // Due to a bug in dialog editor in Modedit, fixed in BZR version 3565
             // this parameter can be broken.
             // It should be >= -50% (no solder paste) and <= 0% (full area of the pad)
@@ -1564,7 +1564,7 @@ void LEGACY_PLUGIN::loadPAD( MODULE* aModule )
 
         else if( TESTLINE( ".SolderPasteRatio" ) )
         {
-            double tmp = atof( line + SZ( ".SolderPasteRatio" ) );
+            double tmp = standalone_strtod( line + SZ( ".SolderPasteRatio" ), 0 );
             pad->SetLocalSolderPasteMarginRatio( tmp );
         }
 
@@ -1881,7 +1881,7 @@ void LEGACY_PLUGIN::load3D( MODULE* aModule )
 
         else if( TESTLINE( "Sc" ) )     // Scale
         {
-            sscanf( line + SZ( "Sc" ), "%lf %lf %lf\n",
+            standalone_sscanf( line + SZ( "Sc" ), "%lf %lf %lf\n",
                     &t3D.m_Scale.x,
                     &t3D.m_Scale.y,
                     &t3D.m_Scale.z );
@@ -1889,7 +1889,7 @@ void LEGACY_PLUGIN::load3D( MODULE* aModule )
 
         else if( TESTLINE( "Of" ) )     // Offset
         {
-            sscanf( line + SZ( "Of" ), "%lf %lf %lf\n",
+            standalone_sscanf( line + SZ( "Of" ), "%lf %lf %lf\n",
                     &t3D.m_Offset.x,
                     &t3D.m_Offset.y,
                     &t3D.m_Offset.z );
@@ -1897,7 +1897,7 @@ void LEGACY_PLUGIN::load3D( MODULE* aModule )
 
         else if( TESTLINE( "Ro" ) )     // Rotation
         {
-            sscanf( line + SZ( "Ro" ), "%lf %lf %lf\n",
+            standalone_sscanf( line + SZ( "Ro" ), "%lf %lf %lf\n",
                     &t3D.m_Rotation.x,
                     &t3D.m_Rotation.y,
                     &t3D.m_Rotation.z );
@@ -2289,7 +2289,7 @@ void LEGACY_PLUGIN::loadTrackList( int aStructType )
 
         // parse the 2nd line to determine the type of object
         // e.g. "De 15 1 7 0 0"   for a via
-        sscanf( line + SZ( "De" ), " %d %d %d %lX %X", &layer_num, &type, &net_code,
+        standalone_sscanf( line + SZ( "De" ), " %d %d %d %lX %X", &layer_num, &type, &net_code,
                 &timeStamp, &flags_int );
 
         STATUS_FLAGS flags;
@@ -2774,7 +2774,7 @@ void LEGACY_PLUGIN::loadDIMENSION()
             int            shape;
             int            ilayer;
 
-            sscanf( line + SZ( "Ge" ), " %d %d %lX", &shape, &ilayer, &timestamp );
+            standalone_sscanf( line + SZ( "Ge" ), " %d %d %lX", &shape, &ilayer, &timestamp );
 
             if( ilayer < FIRST_NON_COPPER_LAYER )
                 layer_num = FIRST_NON_COPPER_LAYER;
@@ -2986,7 +2986,7 @@ BIU LEGACY_PLUGIN::biuParse( const char* aValue, const char** nptrptr )
 
     errno = 0;
 
-    double fval = strtod( aValue, &nptr );
+    double fval = standalone_strtod( aValue, &nptr );
 
     if( errno )
     {
@@ -3023,7 +3023,7 @@ double LEGACY_PLUGIN::degParse( const char* aValue, const char** nptrptr )
 
     errno = 0;
 
-    double fval = strtod( aValue, &nptr );
+    double fval = standalone_strtod( aValue, &nptr );
 
     if( errno )
     {
@@ -3082,11 +3082,11 @@ void LEGACY_PLUGIN::SaveModule3D( const MODULE* me ) const
             continue;
         }
 
-        fprintf( m_fp, "$SHAPE3D\n" );
+        standalone_fprintf( m_fp, "$SHAPE3D\n" );
 
-        fprintf( m_fp, "Na %s\n", EscapedUTF8( sM->m_Filename ).c_str() );
+        standalone_fprintf( m_fp, "Na %s\n", EscapedUTF8( sM->m_Filename ).c_str() );
 
-        fprintf(m_fp,
+        standalone_fprintf(m_fp,
 #if defined(DEBUG)
             // use old formats for testing, just to verify compatibility
             // using "diff", then switch to more concise form for release builds.
@@ -3098,7 +3098,7 @@ void LEGACY_PLUGIN::SaveModule3D( const MODULE* me ) const
                 sM->m_Scale.y,
                 sM->m_Scale.z );
 
-        fprintf(m_fp,
+        standalone_fprintf(m_fp,
 #if defined(DEBUG)
                 "Of %lf %lf %lf\n",
 #else
@@ -3108,7 +3108,7 @@ void LEGACY_PLUGIN::SaveModule3D( const MODULE* me ) const
                 sM->m_Offset.y,
                 sM->m_Offset.z );
 
-        fprintf(m_fp,
+        standalone_fprintf(m_fp,
 #if defined(DEBUG)
                 "Ro %lf %lf %lf\n",
 #else
@@ -3118,7 +3118,7 @@ void LEGACY_PLUGIN::SaveModule3D( const MODULE* me ) const
                 sM->m_Rotation.y,
                 sM->m_Rotation.z );
 
-        fprintf( m_fp, "$EndSHAPE3D\n" );
+        standalone_fprintf( m_fp, "$EndSHAPE3D\n" );
 
         ++sM;
     }
@@ -3361,7 +3361,7 @@ void LP_CACHE::LoadModules( LINE_READER* aReader )
                     std::string newName = footprintName;
 
                     newName += "_v";
-                    sprintf( buf, "%d", version++ );
+                    standalone_snprintf( buf, sizeof(buf), "%d", version++ );
                     newName += buf;
 
                     it = m_modules.find( newName );
@@ -3402,8 +3402,6 @@ void LEGACY_PLUGIN::FootprintEnumerate( wxArrayString&    aFootprintNames,
                                         const wxString&   aLibraryPath,
                                         const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     init( aProperties );
 
     cacheLib( aLibraryPath );
@@ -3420,8 +3418,6 @@ void LEGACY_PLUGIN::FootprintEnumerate( wxArrayString&    aFootprintNames,
 MODULE* LEGACY_PLUGIN::FootprintLoad( const wxString& aLibraryPath,
         const wxString& aFootprintName, const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     init( aProperties );
 
     cacheLib( aLibraryPath );
@@ -3476,8 +3472,6 @@ bool LEGACY_PLUGIN::IsFootprintLibWritable( const wxString& aLibraryPath )
 #if 0   // no support for 32 Cu layers in legacy format
     return false;
 #else
-    LOCALE_IO   toggle;
-
     init( NULL );
 
     cacheLib( aLibraryPath );
