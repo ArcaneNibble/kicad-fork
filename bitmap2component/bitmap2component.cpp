@@ -33,6 +33,7 @@
 #include <common.h>
 #include <geometry/shape_poly_set.h>
 #include <layers_id_colors_and_visibility.h>
+#include <standalone_printf.h>
 
 #include <potracelib.h>
 
@@ -239,40 +240,40 @@ void BITMAPCONV_INFO::OuputFileHeader(  const char * aBrdLayerName )
     {
     case POSTSCRIPT_FMT:
         /* output vector data, e.g. as a rudimentary EPS file */
-        fprintf( m_Outfile, "%%!PS-Adobe-3.0 EPSF-3.0\n" );
-        fprintf( m_Outfile, "%%%%BoundingBox: 0 0 %d %d\n",
+        standalone_fprintf( m_Outfile, "%%!PS-Adobe-3.0 EPSF-3.0\n" );
+        standalone_fprintf( m_Outfile, "%%%%BoundingBox: 0 0 %d %d\n",
                  m_PixmapWidth, m_PixmapHeight );
-        fprintf( m_Outfile, "gsave\n" );
+        standalone_fprintf( m_Outfile, "gsave\n" );
         break;
 
     case PCBNEW_KICAD_MOD:
         // fields text size = 1.5 mm
         // fields text thickness = 1.5 / 5 = 0.3mm
-        fprintf( m_Outfile, "(module %s (layer F.Cu)\n  (at 0 0)\n",
+        standalone_fprintf( m_Outfile, "(module %s (layer F.Cu)\n  (at 0 0)\n",
                  m_CmpName );
-        fprintf( m_Outfile, " (fp_text reference \"G***\" (at 0 0) (layer %s) hide\n"
+        standalone_fprintf( m_Outfile, " (fp_text reference \"G***\" (at 0 0) (layer %s) hide\n"
             "  (effects (font (thickness 0.3)))\n  )\n", aBrdLayerName );
-        fprintf( m_Outfile, "  (fp_text value \"%s\" (at 0.75 0) (layer %s) hide\n"
+        standalone_fprintf( m_Outfile, "  (fp_text value \"%s\" (at 0.75 0) (layer %s) hide\n"
             "  (effects (font (thickness 0.3)))\n  )\n", m_CmpName, aBrdLayerName );
         break;
 
     case KICAD_LOGO:
-        fprintf( m_Outfile, "(polygon (pos 0 0 rbcorner) (rotate 0) (linewidth 0.01)\n" );
+        standalone_fprintf( m_Outfile, "(polygon (pos 0 0 rbcorner) (rotate 0) (linewidth 0.01)\n" );
         break;
 
     case EESCHEMA_FMT:
-        fprintf( m_Outfile, "EESchema-LIBRARY Version 2.3\n" );
-        fprintf( m_Outfile, "#\n# %s\n", m_CmpName );
-        fprintf( m_Outfile, "# pixmap size w = %d, h = %d\n#\n",
+        standalone_fprintf( m_Outfile, "EESchema-LIBRARY Version 2.3\n" );
+        standalone_fprintf( m_Outfile, "#\n# %s\n", m_CmpName );
+        standalone_fprintf( m_Outfile, "# pixmap size w = %d, h = %d\n#\n",
                  m_PixmapWidth, m_PixmapHeight );
 
         // print reference and value
         fieldSize = 60;             // fields text size = 60 mils
         Ypos += fieldSize / 2;
-        fprintf( m_Outfile, "DEF %s G 0 40 Y Y 1 F N\n", m_CmpName );
-        fprintf( m_Outfile, "F0 \"#G\" 0 %d %d H I C CNN\n", Ypos, fieldSize );
-        fprintf( m_Outfile, "F1 \"%s\" 0 %d %d H I C CNN\n", m_CmpName, -Ypos, fieldSize );
-        fprintf( m_Outfile, "DRAW\n" );
+        standalone_fprintf( m_Outfile, "DEF %s G 0 40 Y Y 1 F N\n", m_CmpName );
+        standalone_fprintf( m_Outfile, "F0 \"#G\" 0 %d %d H I C CNN\n", Ypos, fieldSize );
+        standalone_fprintf( m_Outfile, "F1 \"%s\" 0 %d %d H I C CNN\n", m_CmpName, -Ypos, fieldSize );
+        standalone_fprintf( m_Outfile, "DRAW\n" );
         break;
     }
 }
@@ -283,21 +284,21 @@ void BITMAPCONV_INFO::OuputFileEnd()
     switch( m_Format )
     {
     case POSTSCRIPT_FMT:
-        fprintf( m_Outfile, "grestore\n" );
-        fprintf( m_Outfile, "%%EOF\n" );
+        standalone_fprintf( m_Outfile, "grestore\n" );
+        standalone_fprintf( m_Outfile, "%%EOF\n" );
         break;
 
     case PCBNEW_KICAD_MOD:
-        fprintf( m_Outfile, ")\n" );
+        standalone_fprintf( m_Outfile, ")\n" );
         break;
 
     case KICAD_LOGO:
-        fprintf( m_Outfile, ")\n" );
+        standalone_fprintf( m_Outfile, ")\n" );
         break;
 
     case EESCHEMA_FMT:
-        fprintf( m_Outfile, "ENDDRAW\n" );
-        fprintf( m_Outfile, "ENDDEF\n" );
+        standalone_fprintf( m_Outfile, "ENDDRAW\n" );
+        standalone_fprintf( m_Outfile, "ENDDEF\n" );
         break;
     }
 }
@@ -321,89 +322,89 @@ void BITMAPCONV_INFO::OuputOnePolygon( SHAPE_LINE_CHAIN & aPolygon, const char* 
     {
     case POSTSCRIPT_FMT:
         offsetY = (int)( m_PixmapHeight * m_ScaleY );
-        fprintf( m_Outfile, "newpath\n%d %d moveto\n",
+        standalone_fprintf( m_Outfile, "newpath\n%d %d moveto\n",
                  startpoint.x, offsetY - startpoint.y );
         jj = 0;
         for( ii = 1; ii < aPolygon.PointCount(); ii++ )
         {
             currpoint = aPolygon.CPoint( ii );
-            fprintf( m_Outfile, " %d %d lineto",
+            standalone_fprintf( m_Outfile, " %d %d lineto",
                      currpoint.x, offsetY - currpoint.y );
 
             if( jj++ > 6 )
             {
                 jj = 0;
-                fprintf( m_Outfile, ("\n") );
+                standalone_fprintf( m_Outfile, ("\n") );
             }
         }
 
-        fprintf( m_Outfile, "\nclosepath fill\n" );
+        standalone_fprintf( m_Outfile, "\nclosepath fill\n" );
         break;
 
     case PCBNEW_KICAD_MOD:
     {
         double width = 0.01;     // outline thickness in mm
-        fprintf( m_Outfile, "  (fp_poly (pts" );
+        standalone_fprintf( m_Outfile, "  (fp_poly (pts" );
 
         jj = 0;
         for( ii = 0; ii < aPolygon.PointCount(); ii++ )
         {
             currpoint = aPolygon.CPoint( ii );
-            fprintf( m_Outfile, " (xy %f %f)",
+            standalone_fprintf( m_Outfile, " (xy %f %f)",
                     ( currpoint.x - offsetX ) / 1e6,
                     ( currpoint.y - offsetY ) / 1e6 );
 
             if( jj++ > 6 )
             {
                 jj = 0;
-                fprintf( m_Outfile, ("\n    ") );
+                standalone_fprintf( m_Outfile, ("\n    ") );
             }
         }
         // Close polygon
-        fprintf( m_Outfile, " (xy %f %f) )",
+        standalone_fprintf( m_Outfile, " (xy %f %f) )",
                 ( startpoint.x - offsetX ) / 1e6, ( startpoint.y - offsetY ) / 1e6 );
 
-        fprintf( m_Outfile, "(layer %s) (width  %f)\n  )\n", aBrdLayerName, width );
+        standalone_fprintf( m_Outfile, "(layer %s) (width  %f)\n  )\n", aBrdLayerName, width );
 
     }
     break;
 
     case KICAD_LOGO:
-        fprintf( m_Outfile, "  (pts" );
+        standalone_fprintf( m_Outfile, "  (pts" );
         // Internal units = micron, file unit = mm
         jj = 0;
         for( ii = 0; ii < aPolygon.PointCount(); ii++ )
         {
             currpoint = aPolygon.CPoint( ii );
-            fprintf( m_Outfile, " (xy %.3f %.3f)",
+            standalone_fprintf( m_Outfile, " (xy %.3f %.3f)",
                     ( currpoint.x - offsetX ) / 1e3,
                     ( currpoint.y - offsetY ) / 1e3 );
 
             if( jj++ > 4 )
             {
                 jj = 0;
-                fprintf( m_Outfile, ("\n    ") );
+                standalone_fprintf( m_Outfile, ("\n    ") );
             }
         }
         // Close polygon
-        fprintf( m_Outfile, " (xy %.3f %.3f) )\n",
+        standalone_fprintf( m_Outfile, " (xy %.3f %.3f) )\n",
                 ( startpoint.x - offsetX ) / 1e3, ( startpoint.y - offsetY ) / 1e3 );
         break;
 
     case EESCHEMA_FMT:
-        fprintf( m_Outfile, "P %d 0 0 1", (int) aPolygon.PointCount() + 1 );
+        standalone_fprintf( m_Outfile, "P %d 0 0 1", (int) aPolygon.PointCount() + 1 );
         for( ii = 0; ii < aPolygon.PointCount(); ii++ )
         {
             currpoint = aPolygon.CPoint( ii );
-            fprintf( m_Outfile, " %d %d",
+            standalone_fprintf( m_Outfile, " %d %d",
                      currpoint.x - offsetX, currpoint.y - offsetY );
         }
 
         // Close polygon
-        fprintf( m_Outfile, " %d %d",
+        standalone_fprintf( m_Outfile, " %d %d",
                  startpoint.x - offsetX, startpoint.y - offsetY );
 
-        fprintf( m_Outfile, " F\n" );
+        standalone_fprintf( m_Outfile, " F\n" );
         break;
     }
 }
@@ -420,8 +421,6 @@ void BITMAPCONV_INFO::CreateOutputFile( BMP2CMP_MOD_LAYER aModLayer )
     SHAPE_POLY_SET polyset_holes;
 
     potrace_dpoint_t( *c )[3];
-
-    LOCALE_IO toggle;   // Temporary switch the locale to standard C to r/w floats
 
     // The layer name has meaning only for .kicad_mod files.
     // For these files the header creates 2 invisible texts: value and ref
