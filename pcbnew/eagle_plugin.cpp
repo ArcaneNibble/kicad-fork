@@ -63,6 +63,7 @@ Load() TODO's
 #include <kicad_string.h>
 #include <properties.h>
 #include <wx/filename.h>
+#include <standalone_scanf.h>
 
 #include <class_board.h>
 #include <class_module.h>
@@ -85,7 +86,7 @@ typedef MODULE_MAP::const_iterator    MODULE_CITER;
 /// Return is in BIU.
 static double parseEagle( const wxString& aDistance )
 {
-    double ret = strtod( aDistance.c_str(), NULL );
+    double ret = standalone_strtod( aDistance.c_str(), NULL );
     if( aDistance.npos != aDistance.find( "mil" ) )
         ret = IU_PER_MILS * ret;
     else
@@ -107,9 +108,9 @@ void ERULES::parse( wxXmlNode* aRules )
             const wxString& value = child->GetAttribute( "value" );
 
             if( name == "psElongationLong" )
-                psElongationLong = wxAtoi( value );
+                psElongationLong = standalone_strtol( value, 0, 10 );
             else if( name == "psElongationOffset" )
-                psElongationOffset = wxAtoi( value );
+                psElongationOffset = standalone_strtol( value, 0, 10 );
             else if( name == "rvPadTop" )
                 value.ToDouble( &rvPadTop );
             else if( name == "rlMinPadTop" )
@@ -178,7 +179,6 @@ wxSize inline EAGLE_PLUGIN::kicad_fontz( double d ) const
 
 BOARD* EAGLE_PLUGIN::Load( const wxString& aFileName, BOARD* aAppendToMe,  const PROPERTIES* aProperties )
 {
-    LOCALE_IO       toggle;     // toggles on, then off, the C locale.
     wxXmlNode*      doc;
 
     init( aProperties );
@@ -1997,8 +1997,8 @@ void EAGLE_PLUGIN::centerBoard()
         {
             EDA_RECT bbbox = m_board->GetBoardEdgesBoundingBox();
 
-            int w = atoi( page_width.c_str() );
-            int h = atoi( page_height.c_str() );
+            int w = standalone_strtol( page_width.c_str(), 0, 10 );
+            int h = standalone_strtol( page_height.c_str(), 0, 10 );
 
             int desired_x = ( w - bbbox.GetWidth() )  / 2;
             int desired_y = ( h - bbbox.GetHeight() ) / 2;
@@ -2058,7 +2058,6 @@ void EAGLE_PLUGIN::cacheLib( const wxString& aLibPath )
         if( aLibPath != m_lib_path || load )
         {
             wxXmlNode*  doc;
-            LOCALE_IO   toggle;     // toggles on, then off, the C locale.
 
             deleteTemplates();
 

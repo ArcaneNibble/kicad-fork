@@ -31,6 +31,7 @@
 #include <wx/filename.h>
 
 #include <convert_to_biu.h>
+#include <standalone_scanf.h>
 
 using std::string;
 
@@ -54,7 +55,13 @@ double Convert<double>( const wxString& aValue )
 {
     double value;
 
-    if( aValue.ToDouble( &value ) )
+    const char *value_raw;
+    char *value_endptr;
+
+    value_raw = aValue.utf8_str();
+    value = standalone_strtod( value_raw, &value_endptr );
+
+    if( value_raw != value_endptr )
         return value;
     else
         throw XML_PARSER_ERROR( "Conversion to double failed. Original value: '" +
@@ -68,7 +75,7 @@ int Convert<int>( const wxString& aValue )
     if( aValue.IsEmpty() )
         throw XML_PARSER_ERROR( "Conversion to int failed. Original value is empty." );
 
-    return wxAtoi( aValue );
+    return standalone_strtol( aValue.utf8_str(), 0, 10 );
 }
 
 
@@ -93,11 +100,11 @@ EROT Convert<EROT>( const wxString& aRot )
 
     value.spin    = aRot.find( 'S' ) != aRot.npos;
     value.mirror  = aRot.find( 'M' ) != aRot.npos;
-    value.degrees = strtod( aRot.c_str()
-                            + 1                        // skip leading 'R'
-                            + int( value.spin )       // skip optional leading 'S'
-                            + int( value.mirror ),    // skip optional leading 'M'
-                            NULL );
+    value.degrees = standalone_strtod( aRot.c_str()
+                                       + 1                        // skip leading 'R'
+                                       + int( value.spin )       // skip optional leading 'S'
+                                       + int( value.mirror ),    // skip optional leading 'M'
+                                       NULL );
 
     return value;
 }
@@ -202,7 +209,7 @@ EVIA::EVIA( wxXmlNode* aVia )
 
     string ext = parseRequiredAttribute<string>( aVia, "extent" );
 
-    sscanf( ext.c_str(), "%d-%d", &layer_front_most, &layer_back_most );
+    standalone_sscanf( ext.c_str(), "%d-%d", &layer_front_most, &layer_back_most );
 
     drill = parseRequiredAttribute<double>( aVia, "drill" );
     diam  = parseOptionalAttribute<double>( aVia, "diameter" );
