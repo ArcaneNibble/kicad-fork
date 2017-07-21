@@ -35,6 +35,7 @@
 #include <confirm.h>
 #include <kicad_string.h>
 #include <macros.h>
+#include <standalone_printf.h>
 
 #include <class_board.h>
 
@@ -68,8 +69,6 @@ bool GENDRILL_WRITER_BASE::genDrillMapFile( const wxString& aFullFileName,
     PAGE_INFO dummy( PAGE_INFO::A4, false );
 
     PCB_PLOT_PARAMS plot_opts;  // starts plotting with default options
-
-    LOCALE_IO       toggle;     // use standard C notation for float numbers
 
     const PAGE_INFO& page_info =  m_pageInfo ? *m_pageInfo : dummy;
 
@@ -244,7 +243,7 @@ bool GENDRILL_WRITER_BASE::genDrillMapFile( const wxString& aFullFileName,
         plotter->Marker( wxPoint( x, y ), plot_diam, ii );
 
         // List the diameter of each drill in mm and inches.
-        sprintf( line, "%2.2fmm / %2.3f\" ",
+        standalone_snprintf( line, sizeof(line), "%2.2fmm / %2.3f\" ",
                  diameter_in_mm( tool.m_Diameter ),
                  diameter_in_inches( tool.m_Diameter ) );
 
@@ -253,15 +252,15 @@ bool GENDRILL_WRITER_BASE::genDrillMapFile( const wxString& aFullFileName,
         // Now list how many holes and ovals are associated with each drill.
         if( ( tool.m_TotalCount == 1 )
             && ( tool.m_OvalCount == 0 ) )
-            sprintf( line, "(1 hole)" );
+            standalone_snprintf( line, sizeof(line), "(1 hole)" );
         else if( tool.m_TotalCount == 1 ) // && ( toolm_OvalCount == 1 )
-            sprintf( line, "(1 slot)" );
+            standalone_snprintf( line, sizeof(line), "(1 slot)" );
         else if( tool.m_OvalCount == 0 )
-            sprintf( line, "(%d holes)", tool.m_TotalCount );
+            standalone_snprintf( line, sizeof(line), "(%d holes)", tool.m_TotalCount );
         else if( tool.m_OvalCount == 1 )
-            sprintf( line, "(%d holes + 1 slot)", tool.m_TotalCount - 1 );
+            standalone_snprintf( line, sizeof(line), "(%d holes + 1 slot)", tool.m_TotalCount - 1 );
         else // if ( toolm_OvalCount > 1 )
-            sprintf( line, "(%d holes + %d slots)",
+            standalone_snprintf( line, sizeof(line), "(%d holes + %d slots)",
                      tool.m_TotalCount - tool.m_OvalCount,
                      tool.m_OvalCount );
 
