@@ -152,8 +152,6 @@ bool DIALOG_PLOT_SCHEMATIC::plotOneSheetPS( const wxString&     aFileName,
         return false;
     }
 
-    LOCALE_IO toggle;       // Switch the locale to standard C
-
     plotter->StartPlot();
 
     if( aPlotFrameRef )

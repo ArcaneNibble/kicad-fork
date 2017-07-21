@@ -36,6 +36,7 @@
 #include <macros.h>
 #include <kicad_string.h>
 #include <convert_basic_shapes_to_polygon.h>
+#include <standalone_printf.h>
 
 /* Forward declaration of the font width metrics
    (yes extern! this is the way to forward declare variables */
@@ -519,7 +520,7 @@ void PS_PLOTTER::SetCurrentLineWidth( int width, void* aData )
         pen_width = defaultPenWidth;
 
     if( pen_width != GetCurrentLineWidth() )
-        fprintf( outputFile, "%g setlinewidth\n", userToDeviceSize( pen_width ) );
+        standalone_fprintf( outputFile, "%g setlinewidth\n", userToDeviceSize( pen_width ) );
 
     currentPenWidth = pen_width;
 }
@@ -530,7 +531,7 @@ void PS_PLOTTER::emitSetRGBColor( double r, double g, double b )
     wxASSERT( outputFile );
 
     // XXX why %.3g ? shouldn't %g suffice? who cares...
-    fprintf( outputFile, "%.3g %.3g %.3g setrgbcolor\n", r, g, b );
+    standalone_fprintf( outputFile, "%.3g %.3g %.3g setrgbcolor\n", r, g, b );
 }
 
 
@@ -541,7 +542,7 @@ void PS_PLOTTER::SetDash( bool dashed )
 {
     wxASSERT( outputFile );
     if( dashed )
-        fprintf( outputFile, "[%d %d] 0 setdash\n",
+        standalone_fprintf( outputFile, "[%d %d] 0 setdash\n",
                  (int) GetDashMarkLenIU(), (int) GetDashGapLenIU() );
     else
         fputs( "solidline\n", outputFile );
@@ -554,7 +555,7 @@ void PS_PLOTTER::Rect( const wxPoint& p1, const wxPoint& p2, FILL_T fill, int wi
     DPOINT p2_dev = userToDeviceCoordinates( p2 );
 
     SetCurrentLineWidth( width );
-    fprintf( outputFile, "%g %g %g %g rect%d\n", p1_dev.x, p1_dev.y,
+    standalone_fprintf( outputFile, "%g %g %g %g rect%d\n", p1_dev.x, p1_dev.y,
              p2_dev.x - p1_dev.x, p2_dev.y - p1_dev.y, fill );
 }
 
@@ -566,7 +567,7 @@ void PS_PLOTTER::Circle( const wxPoint& pos, int diametre, FILL_T fill, int widt
     double radius = userToDeviceSize( diametre / 2.0 );
 
     SetCurrentLineWidth( width );
-    fprintf( outputFile, "%g %g %g cir%d\n", pos_dev.x, pos_dev.y, radius, fill );
+    standalone_fprintf( outputFile, "%g %g %g cir%d\n", pos_dev.x, pos_dev.y, radius, fill );
 }
 
 
@@ -601,7 +602,7 @@ void PS_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle,
         }
     }
 
-    fprintf( outputFile, "%g %g %g %g %g arc%d\n", centre_dev.x, centre_dev.y,
+    standalone_fprintf( outputFile, "%g %g %g %g %g arc%d\n", centre_dev.x, centre_dev.y,
              radius_dev, StAngle / 10.0, EndAngle / 10.0, fill );
 }
 
@@ -615,16 +616,16 @@ void PS_PLOTTER::PlotPoly( const std::vector< wxPoint >& aCornerList,
     SetCurrentLineWidth( aWidth );
 
     DPOINT pos = userToDeviceCoordinates( aCornerList[0] );
-    fprintf( outputFile, "newpath\n%g %g moveto\n", pos.x, pos.y );
+    standalone_fprintf( outputFile, "newpath\n%g %g moveto\n", pos.x, pos.y );
 
     for( unsigned ii = 1; ii < aCornerList.size(); ii++ )
     {
         pos = userToDeviceCoordinates( aCornerList[ii] );
-        fprintf( outputFile, "%g %g lineto\n", pos.x, pos.y );
+        standalone_fprintf( outputFile, "%g %g lineto\n", pos.x, pos.y );
     }
 
     // Close/(fill) the path
-    fprintf( outputFile, "poly%d\n", aFill );
+    standalone_fprintf( outputFile, "poly%d\n", aFill );
 }
 
 
@@ -650,23 +651,23 @@ void PS_PLOTTER::PlotImage( const wxImage & aImage, const wxPoint& aPos,
     end.x = start.x + drawsize.x;
     end.y = start.y - drawsize.y;
 
-    fprintf( outputFile, "/origstate save def\n" );
-    fprintf( outputFile, "/pix %d string def\n", pix_size.x );
+    standalone_fprintf( outputFile, "/origstate save def\n" );
+    standalone_fprintf( outputFile, "/pix %d string def\n", pix_size.x );
 
     // Locate lower-left corner of image
     DPOINT start_dev = userToDeviceCoordinates( start );
-    fprintf( outputFile, "%g %g translate\n", start_dev.x, start_dev.y );
+    standalone_fprintf( outputFile, "%g %g translate\n", start_dev.x, start_dev.y );
     // Map image size to device
     DPOINT end_dev = userToDeviceCoordinates( end );
-    fprintf( outputFile, "%g %g scale\n",
+    standalone_fprintf( outputFile, "%g %g scale\n",
              std::abs(end_dev.x - start_dev.x), std::abs(end_dev.y - start_dev.y));
 
     // Dimensions of source image (in pixels
-    fprintf( outputFile, "%d %d 8", pix_size.x, pix_size.y );
+    standalone_fprintf( outputFile, "%d %d 8", pix_size.x, pix_size.y );
     //  Map unit square to source
-    fprintf( outputFile, " [%d 0 0 %d 0 %d]\n", pix_size.x, -pix_size.y , pix_size.y);
+    standalone_fprintf( outputFile, " [%d 0 0 %d 0 %d]\n", pix_size.x, -pix_size.y , pix_size.y);
     // include image data in ps file
-    fprintf( outputFile, "{currentfile pix readhexstring pop}\n" );
+    standalone_fprintf( outputFile, "{currentfile pix readhexstring pop}\n" );
 
     if( colorMode )
         fputs( "false 3 colorimage\n", outputFile );
@@ -683,7 +684,7 @@ void PS_PLOTTER::PlotImage( const wxImage & aImage, const wxPoint& aPos,
             if( jj >= 16 )
             {
                 jj = 0;
-                fprintf( outputFile, "\n");
+                standalone_fprintf( outputFile, "\n");
             }
 
             int red, green, blue;
@@ -692,14 +693,14 @@ void PS_PLOTTER::PlotImage( const wxImage & aImage, const wxPoint& aPos,
             blue = aImage.GetBlue( xx, yy) & 0xFF;
 
             if( colorMode )
-                fprintf( outputFile, "%2.2X%2.2X%2.2X", red, green, blue );
+                standalone_fprintf( outputFile, "%2.2X%2.2X%2.2X", red, green, blue );
             else
-                fprintf( outputFile, "%2.2X", (red + green + blue) / 3 );
+                standalone_fprintf( outputFile, "%2.2X", (red + green + blue) / 3 );
         }
     }
 
-    fprintf( outputFile, "\n");
-    fprintf( outputFile, "origstate restore\n" );
+    standalone_fprintf( outputFile, "\n");
+    standalone_fprintf( outputFile, "origstate restore\n" );
 }
 
 
@@ -728,7 +729,7 @@ void PS_PLOTTER::PenTo( const wxPoint& pos, char plume )
     if( penState != plume || pos != penLastpos )
     {
         DPOINT pos_dev = userToDeviceCoordinates( pos );
-        fprintf( outputFile, "%g %g %sto\n",
+        standalone_fprintf( outputFile, "%g %g %sto\n",
                  pos_dev.x, pos_dev.y,
                  ( plume=='D' ) ? "line" : "move" );
     }
@@ -813,14 +814,14 @@ bool PS_PLOTTER::StartPlot()
 
     fputs( "%!PS-Adobe-3.0\n", outputFile );    // Print header
 
-    fprintf( outputFile, "%%%%Creator: %s\n", TO_UTF8( creator ) );
+    standalone_fprintf( outputFile, "%%%%Creator: %s\n", TO_UTF8( creator ) );
 
     /* A "newline" character ("\n") is not included in the following string,
        because it is provided by the ctime() function. */
-    fprintf( outputFile, "%%%%CreationDate: %s", ctime( &time1970 ) );
-    fprintf( outputFile, "%%%%Title: %s\n", TO_UTF8( filename ) );
-    fprintf( outputFile, "%%%%Pages: 1\n" );
-    fprintf( outputFile, "%%%%PageOrder: Ascend\n" );
+    standalone_fprintf( outputFile, "%%%%CreationDate: %s", ctime( &time1970 ) );
+    standalone_fprintf( outputFile, "%%%%Title: %s\n", TO_UTF8( filename ) );
+    standalone_fprintf( outputFile, "%%%%Pages: 1\n" );
+    standalone_fprintf( outputFile, "%%%%PageOrder: Ascend\n" );
 
     // Print boundary box in 1/72 pixels per inch, box is in mils
     const double BIGPTsPERMIL = 0.072;
@@ -833,7 +834,7 @@ bool PS_PLOTTER::StartPlot()
     if( !pageInfo.IsPortrait() )
         psPaperSize.Set( pageInfo.GetHeightMils(), pageInfo.GetWidthMils() );
 
-    fprintf( outputFile, "%%%%BoundingBox: 0 0 %d %d\n",
+    standalone_fprintf( outputFile, "%%%%BoundingBox: 0 0 %d %d\n",
         (int) ceil( psPaperSize.x * BIGPTsPERMIL ),
         (int) ceil( psPaperSize.y * BIGPTsPERMIL ) );
 
@@ -853,22 +854,22 @@ bool PS_PLOTTER::StartPlot()
     // converted to internal units.
 
     if( pageInfo.IsCustom() )
-        fprintf( outputFile, "%%%%DocumentMedia: Custom %d %d 0 () ()\n",
+        standalone_fprintf( outputFile, "%%%%DocumentMedia: Custom %d %d 0 () ()\n",
                  KiROUND( psPaperSize.x * BIGPTsPERMIL ),
                  KiROUND( psPaperSize.y * BIGPTsPERMIL ) );
 
     else  // a standard paper size
-        fprintf( outputFile, "%%%%DocumentMedia: %s %d %d 0 () ()\n",
+        standalone_fprintf( outputFile, "%%%%DocumentMedia: %s %d %d 0 () ()\n",
                  TO_UTF8( pageInfo.GetType() ),
                  KiROUND( psPaperSize.x * BIGPTsPERMIL ),
                  KiROUND( psPaperSize.y * BIGPTsPERMIL ) );
 
     if( pageInfo.IsPortrait() )
-        fprintf( outputFile, "%%%%Orientation: Portrait\n" );
+        standalone_fprintf( outputFile, "%%%%Orientation: Portrait\n" );
     else
-        fprintf( outputFile, "%%%%Orientation: Landscape\n" );
+        standalone_fprintf( outputFile, "%%%%Orientation: Landscape\n" );
 
-    fprintf( outputFile, "%%%%EndComments\n" );
+    standalone_fprintf( outputFile, "%%%%EndComments\n" );
 
     // Now specify various other details.
 
@@ -890,15 +891,15 @@ bool PS_PLOTTER::StartPlot()
 
     // Rototranslate the coordinate to achieve the landscape layout
     if( !pageInfo.IsPortrait() )
-        fprintf( outputFile, "%d 0 translate 90 rotate\n", 10 * psPaperSize.x );
+        standalone_fprintf( outputFile, "%d 0 translate 90 rotate\n", 10 * psPaperSize.x );
 
     // Apply the user fine scale adjustments
     if( plotScaleAdjX != 1.0 || plotScaleAdjY != 1.0 )
-        fprintf( outputFile, "%g %g scale\n",
+        standalone_fprintf( outputFile, "%g %g scale\n",
                  plotScaleAdjX, plotScaleAdjY );
 
     // Set default line width
-    fprintf( outputFile, "%g setlinewidth\n", userToDeviceSize( defaultPenWidth ) );
+    standalone_fprintf( outputFile, "%g setlinewidth\n", userToDeviceSize( defaultPenWidth ) );
     fputs( "%%EndPageSetup\n", outputFile );
 
     return true;
@@ -960,7 +961,7 @@ void PS_PLOTTER::Text( const wxPoint&       aPos,
         // parameters. The CTM is formatted with %f since sin/cos tends
         // to make %g use exponential notation (which is not supported)
         fputsPostscriptString( outputFile, aText );
-        fprintf( outputFile, " %g [%f %f %f %f %f %f] %g %s textshow\n",
+        standalone_fprintf( outputFile, " %g [%f %f %f %f %f %f] %g %s textshow\n",
                 wideningFactor, ctm_a, ctm_b, ctm_c, ctm_d, ctm_e, ctm_f,
                 heightFactor, fontname );
 
@@ -976,7 +977,7 @@ void PS_PLOTTER::Text( const wxPoint&       aPos,
         {
             DPOINT dev_from = userToDeviceSize( wxSize( pos_pairs[i], overbar_y ) );
             DPOINT dev_to = userToDeviceSize( wxSize( pos_pairs[i + 1], overbar_y ) );
-            fprintf( outputFile, "%g %g %g %g line ",
+            standalone_fprintf( outputFile, "%g %g %g %g line ",
                      dev_from.x, dev_from.y, dev_to.x, dev_to.y );
         }
 
@@ -989,7 +990,7 @@ void PS_PLOTTER::Text( const wxPoint&       aPos,
     {
         fputsPostscriptString( outputFile, aText );
         DPOINT pos_dev = userToDeviceCoordinates( aPos );
-        fprintf( outputFile, " %g %g phantomshow\n", pos_dev.x, pos_dev.y );
+        standalone_fprintf( outputFile, " %g %g phantomshow\n", pos_dev.x, pos_dev.y );
     }
 
     // Draw the stroked text (if requested)
