@@ -203,6 +203,7 @@
 #include <macros.h>
 #include <kicad_string.h>
 #include <convert_basic_shapes_to_polygon.h>
+#include <standalone_printf.h>
 
 // The hpgl command to close a polygon def, fill it and plot outline:
 // PM 2; ends the polygon definition and closes it if not closed
@@ -242,11 +243,11 @@ void HPGL_PLOTTER::SetViewport( const wxPoint& aOffset, double aIusPerDecimil,
 bool HPGL_PLOTTER::StartPlot()
 {
     wxASSERT( outputFile );
-    fprintf( outputFile, "IN;VS%d;PU;PA;SP%d;\n", penSpeed, penNumber );
+    standalone_fprintf( outputFile, "IN;VS%d;PU;PA;SP%d;\n", penSpeed, penNumber );
 
     // Set HPGL Pen Thickness (in mm) (usefull in polygon fill command)
     double penThicknessMM = userToDeviceSize( penDiameter )/40;
-    fprintf( outputFile, "PT %.1f;\n", penThicknessMM );
+    standalone_fprintf( outputFile, "PT %.1f;\n", penThicknessMM );
 
     return true;
 }
@@ -278,7 +279,7 @@ void HPGL_PLOTTER::Rect( const wxPoint& p1, const wxPoint& p2, FILL_T fill, int 
     wxASSERT( outputFile );
     DPOINT p2dev = userToDeviceCoordinates( p2 );
     MoveTo( p1 );
-    fprintf( outputFile, "EA %.0f,%.0f;\n", p2dev.x, p2dev.y );
+    standalone_fprintf( outputFile, "EA %.0f,%.0f;\n", p2dev.x, p2dev.y );
     PenFinish();
 }
 
@@ -295,15 +296,15 @@ void HPGL_PLOTTER::Circle( const wxPoint& centre, int diameter, FILL_T fill,
     {
         // Draw the filled area
         MoveTo( centre );
-        fprintf( outputFile, "PM 0; CI %g;\n", radius );
-        fprintf( outputFile, hpgl_end_polygon_cmd );   // Close, fill polygon and draw outlines
+        standalone_fprintf( outputFile, "PM 0; CI %g;\n", radius );
+        standalone_fprintf( outputFile, hpgl_end_polygon_cmd );   // Close, fill polygon and draw outlines
         PenFinish();
     }
 
     if( radius > 0 )
     {
         MoveTo( centre );
-        fprintf( outputFile, "CI %g;\n", radius );
+        standalone_fprintf( outputFile, "CI %g;\n", radius );
         PenFinish();
     }
 }
@@ -326,7 +327,7 @@ void HPGL_PLOTTER::PlotPoly( const std::vector<wxPoint>& aCornerList,
     {
         // Draw the filled area
         SetCurrentLineWidth( USE_DEFAULT_LINE_WIDTH );
-        fprintf( outputFile, "PM 0;\n" );       // Start polygon
+        standalone_fprintf( outputFile, "PM 0;\n" );       // Start polygon
 
         for( unsigned ii = 1; ii < aCornerList.size(); ++ii )
             LineTo( aCornerList[ii] );
@@ -336,7 +337,7 @@ void HPGL_PLOTTER::PlotPoly( const std::vector<wxPoint>& aCornerList,
         if( aCornerList[ii] != aCornerList[0] )
             LineTo( aCornerList[0] );
 
-        fprintf( outputFile, hpgl_end_polygon_cmd );   // Close, fill polygon and draw outlines
+        standalone_fprintf( outputFile, hpgl_end_polygon_cmd );   // Close, fill polygon and draw outlines
     }
     else
     {
@@ -411,7 +412,7 @@ void HPGL_PLOTTER::PenTo( const wxPoint& pos, char plume )
     DPOINT pos_dev = userToDeviceCoordinates( pos );
 
     if( penLastpos != pos )
-        fprintf( outputFile, "PA %.0f,%.0f;\n", pos_dev.x, pos_dev.y );
+        standalone_fprintf( outputFile, "PA %.0f,%.0f;\n", pos_dev.x, pos_dev.y );
 
     penLastpos = pos;
 }
@@ -482,12 +483,12 @@ void HPGL_PLOTTER::Arc( const wxPoint& centre, double StAngle, double EndAngle, 
     cmap.y  = centre.y - KiROUND( sindecideg( radius, StAngle ) );
     DPOINT  cmap_dev = userToDeviceCoordinates( cmap );
 
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "PU;PA %.0f,%.0f;PD;AA %.0f,%.0f,",
              cmap_dev.x, cmap_dev.y,
              centre_dev.x, centre_dev.y );
-    fprintf( outputFile, "%.0f", angle );
-    fprintf( outputFile, ";PU;\n" );
+    standalone_fprintf( outputFile, "%.0f", angle );
+    standalone_fprintf( outputFile, ";PU;\n" );
     PenFinish();
 }
 
@@ -558,13 +559,13 @@ void HPGL_PLOTTER::FlashPadCircle( const wxPoint& pos, int diametre,
         // Gives a correct current starting point for the circle
         MoveTo( wxPoint( pos.x+radius, pos.y ) );
         // Plot filled area and its outline
-        fprintf( outputFile, "PM 0; PA %.0f,%.0f;CI %.0f;%s",
+        standalone_fprintf( outputFile, "PM 0; PA %.0f,%.0f;CI %.0f;%s",
                          pos_dev.x, pos_dev.y, rsize, hpgl_end_polygon_cmd );
     }
     else
     {
         // Draw outline only:
-        fprintf( outputFile, "PA %.0f,%.0f;CI %.0f;\n",
+        standalone_fprintf( outputFile, "PA %.0f,%.0f;CI %.0f;\n",
                      pos_dev.x, pos_dev.y, rsize );
     }
 

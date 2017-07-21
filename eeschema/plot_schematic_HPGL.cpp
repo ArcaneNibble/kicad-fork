@@ -169,8 +169,6 @@ void DIALOG_PLOT_SCHEMATIC::createHPGLFile( bool aPlotAll, bool aPlotFrameRef )
             wxFileName plotFileName = createPlotFileName( m_outputDirectoryName, fname,
                                                           ext, &reporter );
 
-            LOCALE_IO toggle;
-
             if( Plot_1_Page_HPGL( plotFileName.GetFullPath(), screen, plotPage, plotOffset,
                                   plot_scale, aPlotFrameRef ) )
             {
@@ -219,8 +217,6 @@ bool DIALOG_PLOT_SCHEMATIC::Plot_1_Page_HPGL( const wxString&   aFileName,
         delete plotter;
         return false;
     }
-
-    LOCALE_IO toggle;
 
     // Pen num and pen speed are not initialized here.
     // Default HPGL driver values are used
