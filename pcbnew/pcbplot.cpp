@@ -431,15 +431,8 @@ PLOT_CONTROLLER::~PLOT_CONTROLLER()
     ClosePlot();
 }
 
-
-/* IMPORTANT THING TO KNOW: the locale during plots *MUST* be kept as
- * C/POSIX using a LOCALE_IO object on the stack. This even when
- * opening/closing the plotfile, since some drivers do I/O even then */
-
 void PLOT_CONTROLLER::ClosePlot()
 {
-    LOCALE_IO toggle;
-
     if( m_plotter )
     {
         m_plotter->EndPlot();
@@ -453,8 +446,6 @@ bool PLOT_CONTROLLER::OpenPlotfile( const wxString &aSuffix,
                                     PlotFormat     aFormat,
                                     const wxString &aSheetDesc )
 {
-    LOCALE_IO toggle;
-
     /* Save the current format: sadly some plot routines depends on this
        but the main reason is that the StartPlot method uses it to
        dispatch the plotter creation */
@@ -495,8 +486,6 @@ bool PLOT_CONTROLLER::OpenPlotfile( const wxString &aSuffix,
 
 bool PLOT_CONTROLLER::PlotLayer()
 {
-    LOCALE_IO toggle;
-
     // No plot open, nothing to do...
     if( !m_plotter )
         return false;

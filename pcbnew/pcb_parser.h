@@ -36,6 +36,7 @@
 #include <common.h>                             // KiROUND
 #include <convert_to_biu.h>                     // IU_PER_MM
 #include <3d_cache/3d_info.h>
+#include <standalone_scanf.h>
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
@@ -253,7 +254,7 @@ class PCB_PARSER : public PCB_LEXER
 
     inline int parseInt()
     {
-        return (int)strtol( CurText(), NULL, 10 );
+        return (int)standalone_strtol( CurText(), NULL, 10 );
     }
 
     inline int parseInt( const char* aExpected )
@@ -265,7 +266,7 @@ class PCB_PARSER : public PCB_LEXER
     inline long parseHex()
     {
         NextTok();
-        return strtol( CurText(), NULL, 16 );
+        return standalone_strtol( CurText(), NULL, 16 );
     }
 
     bool parseBool();

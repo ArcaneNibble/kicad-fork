@@ -127,7 +127,7 @@ double PCB_PARSER::parseDouble()
 
     errno = 0;
 
-    double fval = strtod( CurText(), &tmp );
+    double fval = standalone_strtod( CurText(), &tmp );
 
     if( errno )
     {
@@ -406,7 +406,6 @@ BOARD_ITEM* PCB_PARSER::Parse()
 {
     T               token;
     BOARD_ITEM*     item;
-    LOCALE_IO       toggle;
 
     // MODULEs can be prefixed with an initial block of single line comments and these
     // are kept for Format() so they round trip in s-expression form.  BOARDs might

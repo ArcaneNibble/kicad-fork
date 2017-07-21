@@ -31,6 +31,7 @@
 #include <fctsys.h>
 #include <common.h>
 #include <pcbnew.h>
+#include <standalone_printf.h>
 
 #include <class_board.h>
 #include <string>
@@ -96,7 +97,7 @@ std::string BOARD_ITEM::FormatInternalUnits( int aValue )
 
     if( mm != 0.0 && fabs( mm ) <= 0.0001 )
     {
-        len = sprintf( buf, "%.10f", mm );
+        len = standalone_snprintf( buf, sizeof(buf), "%.10f", mm );
 
         while( --len > 0 && buf[len] == '0' )
             buf[len] = '\0';
@@ -108,7 +109,7 @@ std::string BOARD_ITEM::FormatInternalUnits( int aValue )
     }
     else
     {
-        len = sprintf( buf, "%.10g", mm );
+        len = standalone_snprintf( buf, sizeof(buf), "%.10g", mm );
     }
 
     return std::string( buf, len );
@@ -171,7 +172,7 @@ std::string BOARD_ITEM::FormatAngle( double aAngle )
 {
     char temp[50];
 
-    int len = snprintf( temp, sizeof(temp), "%.10g", aAngle / 10.0 );
+    int len = standalone_snprintf( temp, sizeof(temp), "%.10g", aAngle / 10.0 );
 
     return std::string( temp, len );
 }
