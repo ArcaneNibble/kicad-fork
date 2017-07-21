@@ -48,6 +48,8 @@
 #include <gendrill_Excellon_writer.h>
 #include <wildcards_and_files_ext.h>
 #include <reporter.h>
+#include <standalone_printf.h>
+#include <standalone_printf_extra.h>
 
 // Comment/uncomment this to write or not a comment
 // in drill file when PTH and NPTH are merged to flag
@@ -140,8 +142,6 @@ int EXCELLON_WRITER::createDrillFile( FILE* aFile )
     double xt, yt;
     char   line[1024];
 
-    LOCALE_IO dummy;    // Use the standard notation for double numbers
-
     writeEXCELLONHeader();
 
     holes_count = 0;
@@ -162,17 +162,17 @@ int EXCELLON_WRITER::createDrillFile( FILE* aFile )
         if( writePTHcomment && !tool_descr.m_Hole_NotPlated )
         {
             writePTHcomment = false;
-            fprintf( m_file, ";TYPE=PLATED\n" );
+            standalone_fprintf( m_file, ";TYPE=PLATED\n" );
         }
 
         if( writeNPTHcomment && tool_descr.m_Hole_NotPlated )
         {
             writeNPTHcomment = false;
-            fprintf( m_file, ";TYPE=NON_PLATED\n" );
+            standalone_fprintf( m_file, ";TYPE=NON_PLATED\n" );
         }
 #endif
 
-        fprintf( m_file, "T%dC%.3f\n", ii + 1, tool_descr.m_Diameter * m_conversionUnits );
+        standalone_fprintf( m_file, "T%dC%.3f\n", ii + 1, tool_descr.m_Diameter * m_conversionUnits );
     }
 
     fputs( "%\n", m_file );                         // End of header info
@@ -202,7 +202,7 @@ int EXCELLON_WRITER::createDrillFile( FILE* aFile )
         if( tool_reference != hole_descr.m_Tool_Reference )
         {
             tool_reference = hole_descr.m_Tool_Reference;
-            fprintf( m_file, "T%d\n", tool_reference );
+            standalone_fprintf( m_file, "T%d\n", tool_reference );
         }
 
         x0 = hole_descr.m_Hole_Pos.x - m_offset.x;
@@ -233,7 +233,7 @@ int EXCELLON_WRITER::createDrillFile( FILE* aFile )
         if( tool_reference != hole_descr.m_Tool_Reference )
         {
             tool_reference = hole_descr.m_Tool_Reference;
-            fprintf( m_file, "T%d\n", tool_reference );
+            standalone_fprintf( m_file, "T%d\n", tool_reference );
         }
 
         diam = std::min( hole_descr.m_Hole_Size.x, hole_descr.m_Hole_Size.y );
@@ -327,7 +327,7 @@ void EXCELLON_WRITER::SetFormat( bool      aMetric,
 
 void EXCELLON_WRITER::writeCoordinates( char* aLine, double aCoordX, double aCoordY )
 {
-    wxString xs, ys;
+    std::string xs, ys;
     int      xpad = m_precision.m_lhs + m_precision.m_rhs;
     int      ypad = xpad;
 
@@ -345,24 +345,24 @@ void EXCELLON_WRITER::writeCoordinates( char* aLine, double aCoordX, double aCoo
         if( m_unitsDecimal )
         {
             // resolution is 1/1000 mm
-            xs.Printf( wxT( "%.3f" ), aCoordX );
-            ys.Printf( wxT( "%.3f" ), aCoordY );
+            standalone_stdstringprintf( &xs, "%.3f", aCoordX );
+            standalone_stdstringprintf( &ys, "%.3f", aCoordY );
         }
         else
         {
             // resolution is 1/10000 inch
-            xs.Printf( wxT( "%.4f" ), aCoordX );
-            ys.Printf( wxT( "%.4f" ), aCoordY );
+            standalone_stdstringprintf( &xs, "%.4f", aCoordX );
+            standalone_stdstringprintf( &ys, "%.4f", aCoordY );
         }
 
         //Remove useless trailing 0
-        while( xs.Last() == '0' )
-            xs.RemoveLast();
+        while( xs.back() == '0' )
+            xs.pop_back();
 
-        while( ys.Last() == '0' )
-            ys.RemoveLast();
+        while( ys.back() == '0' )
+            ys.pop_back();
 
-        sprintf( aLine, "X%sY%s\n", TO_UTF8( xs ), TO_UTF8( ys ) );
+        sprintf( aLine, "X%sY%s\n", xs.c_str(), ys.c_str() );
         break;
 
     case SUPPRESS_LEADING:
@@ -388,20 +388,20 @@ void EXCELLON_WRITER::writeCoordinates( char* aLine, double aCoordX, double aCoo
         if( aCoordY < 0 )
             ypad++;
 
-        xs.Printf( wxT( "%0*d" ), xpad, KiROUND( aCoordX ) );
-        ys.Printf( wxT( "%0*d" ), ypad, KiROUND( aCoordY ) );
+        standalone_stdstringprintf( &xs, "%0*d", xpad, KiROUND( aCoordX ) );
+        standalone_stdstringprintf( &ys, "%0*d", ypad, KiROUND( aCoordY ) );
 
-        size_t j = xs.Len() - 1;
+        size_t j = xs.length() - 1;
 
         while( xs[j] == '0' && j )
-            xs.Truncate( j-- );
+            xs.erase( j-- );
 
-        j = ys.Len() - 1;
+        j = ys.length() - 1;
 
         while( ys[j] == '0' && j )
-            ys.Truncate( j-- );
+            ys.erase( j-- );
 
-        sprintf( aLine, "X%sY%s\n", TO_UTF8( xs ), TO_UTF8( ys ) );
+        sprintf( aLine, "X%sY%s\n", xs.c_str(), ys.c_str() );
         break;
     }
 
@@ -417,9 +417,9 @@ void EXCELLON_WRITER::writeCoordinates( char* aLine, double aCoordX, double aCoo
         if( aCoordY < 0 )
             ypad++;
 
-        xs.Printf( wxT( "%0*d" ), xpad, KiROUND( aCoordX ) );
-        ys.Printf( wxT( "%0*d" ), ypad, KiROUND( aCoordY ) );
-        sprintf( aLine, "X%sY%s\n", TO_UTF8( xs ), TO_UTF8( ys ) );
+        standalone_stdstringprintf( &xs, "%0*d", xpad, KiROUND( aCoordX ) );
+        standalone_stdstringprintf( &ys, "%0*d", ypad, KiROUND( aCoordY ) );
+        sprintf( aLine, "X%sY%s\n", xs.c_str(), ys.c_str() );
         break;
     }
 }
@@ -435,7 +435,7 @@ void EXCELLON_WRITER::writeEXCELLONHeader()
         wxString msg;
         msg << wxT("KiCad") << wxT( " " ) << GetBuildVersion();
 
-        fprintf( m_file, ";DRILL file {%s} date %s\n", TO_UTF8( msg ), TO_UTF8( DateAndTime() ) );
+        standalone_fprintf( m_file, ";DRILL file {%s} date %s\n", TO_UTF8( msg ), TO_UTF8( DateAndTime() ) );
         msg = wxT( ";FORMAT={" );
 
         // Print precision:

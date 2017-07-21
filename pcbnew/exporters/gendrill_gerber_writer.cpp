@@ -131,8 +131,6 @@ int GERBER_WRITER::createDrillFile( wxString& aFullFilename, bool aIsNpth,
 {
     int    holes_count;
 
-    LOCALE_IO dummy;    // Use the standard notation for double numbers
-
     GERBER_PLOTTER plotter;
 
     // Gerber drill file imply X2 format:

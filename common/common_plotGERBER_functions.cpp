@@ -37,6 +37,7 @@
 #include <macros.h>
 #include <kicad_string.h>
 #include <convert_basic_shapes_to_polygon.h>
+#include <standalone_printf.h>
 
 #include <build_version.h>
 
@@ -101,7 +102,7 @@ void GERBER_PLOTTER::SetGerberCoordinatesFormat( int aResolution, bool aUseInche
 void GERBER_PLOTTER::emitDcode( const DPOINT& pt, int dcode )
 {
 
-    fprintf( outputFile, "X%dY%dD%02d*\n",
+    standalone_fprintf( outputFile, "X%dY%dD%02d*\n",
 	    KiROUND( pt.x ), KiROUND( pt.y ), dcode );
 }
 
@@ -175,7 +176,7 @@ bool GERBER_PLOTTER::StartPlot()
     for( unsigned ii = 0; ii < m_headerExtraLines.GetCount(); ii++ )
     {
         if( ! m_headerExtraLines[ii].IsEmpty() )
-            fprintf( outputFile, "%s\n", TO_UTF8( m_headerExtraLines[ii] ) );
+            standalone_fprintf( outputFile, "%s\n", TO_UTF8( m_headerExtraLines[ii] ) );
     }
 
     // Set coordinate format to 3.6 or 4.5 absolute, leading zero omitted
@@ -184,16 +185,16 @@ bool GERBER_PLOTTER::StartPlot()
     // It is fixed here to 3 (inch) or 4 (mm), but is not actually used
     int leadingDigitCount = m_gerberUnitInch ? 3 : 4;
 
-    fprintf( outputFile, "%%FSLAX%d%dY%d%d*%%\n",
+    standalone_fprintf( outputFile, "%%FSLAX%d%dY%d%d*%%\n",
              leadingDigitCount, m_gerberUnitFmt,
              leadingDigitCount, m_gerberUnitFmt );
-    fprintf( outputFile,
+    standalone_fprintf( outputFile,
              "G04 Gerber Fmt %d.%d, Leading zero omitted, Abs format (unit %s)*\n",
              leadingDigitCount, m_gerberUnitFmt,
              m_gerberUnitInch ? "inch" : "mm" );
 
     wxString Title = creator + wxT( " " ) + GetBuildVersion();
-    fprintf( outputFile, "G04 Created by KiCad (%s) date %s*\n",
+    standalone_fprintf( outputFile, "G04 Created by KiCad (%s) date %s*\n",
              TO_UTF8( Title ), TO_UTF8( DateAndTime() ) );
 
     /* Mass parameter: unit = INCHES/MM */
@@ -326,7 +327,7 @@ void GERBER_PLOTTER::selectAperture( const wxSize&           aSize,
     {
         // Pick an existing aperture or create a new one
         currentAperture = getAperture( aSize, aType, aApertureAttribute );
-        fprintf( outputFile, "D%d*\n", currentAperture->m_DCode );
+        standalone_fprintf( outputFile, "D%d*\n", currentAperture->m_DCode );
     }
 }
 
@@ -353,7 +354,7 @@ void GERBER_PLOTTER::writeApertureList()
             fputs( GBR_APERTURE_METADATA::FormatAttribute(
                     (GBR_APERTURE_METADATA::GBR_APERTURE_ATTRIB) attribute ).c_str(), outputFile );
 
-        char* text = cbuf + sprintf( cbuf, "%%ADD%d", tool->m_DCode );
+        char* text = cbuf + standalone_snprintf( cbuf, sizeof(cbuf), "%%ADD%d", tool->m_DCode );
 
         /* Please note: the Gerber specs for mass parameters say that
            exponential syntax is *not* allowed and the decimal point should
@@ -365,21 +366,23 @@ void GERBER_PLOTTER::writeApertureList()
         switch( tool->m_Type )
         {
         case APERTURE::Circle:
-            sprintf( text, "C,%#f*%%\n", tool->m_Size.x * fscale );
+            standalone_snprintf( text, sizeof(cbuf) - (text - cbuf), "C,%#f*%%\n",
+                tool->m_Size.x * fscale );
             break;
 
         case APERTURE::Rect:
-            sprintf( text, "R,%#fX%#f*%%\n",
+            standalone_snprintf( text, sizeof(cbuf) - (text - cbuf), "R,%#fX%#f*%%\n",
 	             tool->m_Size.x * fscale,
                      tool->m_Size.y * fscale );
             break;
 
         case APERTURE::Plotting:
-            sprintf( text, "C,%#f*%%\n", tool->m_Size.x * fscale );
+            standalone_snprintf( text, sizeof(cbuf) - (text - cbuf), "C,%#f*%%\n",
+                tool->m_Size.x * fscale );
             break;
 
         case APERTURE::Oval:
-            sprintf( text, "O,%#fX%#f*%%\n",
+            standalone_snprintf( text, sizeof(cbuf) - (text - cbuf), "O,%#fX%#f*%%\n",
 	            tool->m_Size.x * fscale,
 		    tool->m_Size.y * fscale );
             break;
@@ -461,17 +464,17 @@ void GERBER_PLOTTER::Arc( const wxPoint& aCenter, double aStAngle, double aEndAn
     DPOINT devEnd = userToDeviceCoordinates( end );
     DPOINT devCenter = userToDeviceCoordinates( aCenter ) - userToDeviceCoordinates( start );
 
-    fprintf( outputFile, "G75*\n" ); // Multiquadrant mode
+    standalone_fprintf( outputFile, "G75*\n" ); // Multiquadrant mode
 
     if( aStAngle < aEndAngle )
-        fprintf( outputFile, "G03" );
+        standalone_fprintf( outputFile, "G03" );
     else
-        fprintf( outputFile, "G02" );
+        standalone_fprintf( outputFile, "G02" );
 
-    fprintf( outputFile, "X%dY%dI%dJ%dD01*\n",
+    standalone_fprintf( outputFile, "X%dY%dI%dJ%dD01*\n",
              KiROUND( devEnd.x ), KiROUND( devEnd.y ),
              KiROUND( devCenter.x ), KiROUND( devCenter.y ) );
-    fprintf( outputFile, "G01*\n" ); // Back to linear interp.
+    standalone_fprintf( outputFile, "G01*\n" ); // Back to linear interp.
 }
 
 
@@ -968,7 +971,7 @@ void GERBER_PLOTTER::Text( const wxPoint& aPos, const COLOR4D aColor,
 void GERBER_PLOTTER::SetLayerPolarity( bool aPositive )
 {
     if( aPositive )
-        fprintf( outputFile, "%%LPD*%%\n" );
+        standalone_fprintf( outputFile, "%%LPD*%%\n" );
     else
-        fprintf( outputFile, "%%LPC*%%\n" );
+        standalone_fprintf( outputFile, "%%LPC*%%\n" );
 }
