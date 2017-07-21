@@ -33,6 +33,7 @@
 #include <richio.h>
 #include <core/typeinfo.h>
 #include <properties.h>
+#include <standalone_scanf.h>
 
 #include <general.h>
 #include <lib_field.h>
@@ -59,6 +60,22 @@
 #include <lib_text.h>
 #include <eeschema_id.h>    // for MAX_UNIT_COUNT_PER_PACKAGE definition
 
+#define IsASCIISpace(a) ((a) == ' ' || (unsigned)(a)-'\t' < 5)
+
+#define ascii_isupper(a) (((unsigned)(a)-'A') < 26)
+static int ascii_tolower(int c)
+{
+    if (ascii_isupper(c)) return c | 32;
+    return c;
+}
+
+static int strncasecmp_ascii(const char *_l, const char *_r, size_t n)
+{
+    const unsigned char *l=(const unsigned char *)_l, *r=(const unsigned char *)_r;
+    if (!n--) return 0;
+    for (; *l && *r && n && (*l == *r || ascii_tolower(*l) == ascii_tolower(*r)); l++, r++, n--);
+    return ascii_tolower(*l) - ascii_tolower(*r);
+}
 
 // Must be the first line of part library document (.dcm) files.
 #define DOCFILE_IDENT     "EESchema-DOCLIB  Version 2.0"
@@ -104,8 +121,8 @@ static bool is_eol( char c )
 static bool strCompare( const char* aString, const char* aLine, const char** aOutput = NULL )
 {
     size_t len = strlen( aString );
-    bool retv = ( strncasecmp( aLine, aString, len ) == 0 ) &&
-                ( isspace( aLine[ len ] ) || aLine[ len ] == 0 );
+    bool retv = ( strncasecmp_ascii( aLine, aString, len ) == 0 ) &&
+                ( IsASCIISpace( aLine[ len ] ) || aLine[ len ] == 0 );
 
     if( retv && aOutput )
     {
@@ -115,7 +132,7 @@ static bool strCompare( const char* aString, const char* aLine, const char** aOu
         tmp += len;
 
         // Move to the beginning of the next token.
-        while( *tmp && isspace( *tmp ) )
+        while( *tmp && IsASCIISpace( *tmp ) )
             tmp++;
 
         *aOutput = tmp;
@@ -148,7 +165,7 @@ static int parseInt( FILE_LINE_READER& aReader, const char* aLine, const char** 
     // Clear errno before calling strtol() in case some other crt call set it.
     errno = 0;
 
-    long retv = strtol( aLine, (char**) aOutput, 10 );
+    long retv = standalone_strtol( aLine, (char**) aOutput, 10 );
 
     // Make sure no error occurred when calling strtol().
     if( errno == ERANGE )
@@ -159,7 +176,7 @@ static int parseInt( FILE_LINE_READER& aReader, const char* aLine, const char** 
     {
         const char* next = *aOutput;
 
-        while( *next && isspace( *next ) )
+        while( *next && IsASCIISpace( *next ) )
             next++;
 
         *aOutput = next;
@@ -194,7 +211,7 @@ static unsigned long parseHex( FILE_LINE_READER& aReader, const char* aLine,
 
     // Clear errno before calling strtoul() in case some other crt call set it.
     errno = 0;
-    retv = strtoul( aLine, (char**) aOutput, 16 );
+    retv = standalone_strtoul( aLine, (char**) aOutput, 16 );
 
     // Make sure no error occurred when calling strtoul().
     if( errno == ERANGE )
@@ -207,7 +224,7 @@ static unsigned long parseHex( FILE_LINE_READER& aReader, const char* aLine,
 
         const char* next = *aOutput;
 
-        while( *next && isspace( *next ) )
+        while( *next && IsASCIISpace( *next ) )
             next++;
 
         *aOutput = next;
@@ -241,7 +258,7 @@ static double parseDouble( FILE_LINE_READER& aReader, const char* aLine,
     // Clear errno before calling strtod() in case some other crt call set it.
     errno = 0;
 
-    double retv = strtod( aLine, (char**) aOutput );
+    double retv = standalone_strtod( aLine, (char**) aOutput );
 
     // Make sure no error occurred when calling strtod().
     if( errno == ERANGE )
@@ -252,7 +269,7 @@ static double parseDouble( FILE_LINE_READER& aReader, const char* aLine,
     {
         const char* next = *aOutput;
 
-        while( *next && isspace( *next ) )
+        while( *next && IsASCIISpace( *next ) )
             next++;
 
         *aOutput = next;
@@ -278,20 +295,20 @@ static double parseDouble( FILE_LINE_READER& aReader, const char* aLine,
 static char parseChar( FILE_LINE_READER& aReader, const char* aCurrentToken,
                        const char** aNextToken = NULL )
 {
-    while( *aCurrentToken && isspace( *aCurrentToken ) )
+    while( *aCurrentToken && IsASCIISpace( *aCurrentToken ) )
         aCurrentToken++;
 
     if( !*aCurrentToken )
         SCH_PARSE_ERROR( _( "unexpected end of line" ), aReader, aCurrentToken );
 
-    if( !isspace( *( aCurrentToken + 1 ) ) )
+    if( !IsASCIISpace( *( aCurrentToken + 1 ) ) )
         SCH_PARSE_ERROR( _( "expected single character token" ), aReader, aCurrentToken );
 
     if( aNextToken )
     {
         const char* next = aCurrentToken + 2;
 
-        while( *next && isspace( *next ) )
+        while( *next && IsASCIISpace( *next ) )
             next++;
 
         *aNextToken = next;
@@ -331,7 +348,7 @@ static void parseUnquotedString( wxString& aString, FILE_LINE_READER& aReader,
 
     const char* tmp = aCurrentToken;
 
-    while( *tmp && isspace( *tmp ) )
+    while( *tmp && IsASCIISpace( *tmp ) )
         tmp++;
 
     if( !*tmp )
@@ -344,7 +361,7 @@ static void parseUnquotedString( wxString& aString, FILE_LINE_READER& aReader,
 
     std::string utf8;
 
-    while( *tmp && !isspace( *tmp ) )
+    while( *tmp && !IsASCIISpace( *tmp ) )
         utf8 += *tmp++;
 
     aString = FROM_UTF8( utf8.c_str() );
@@ -356,7 +373,7 @@ static void parseUnquotedString( wxString& aString, FILE_LINE_READER& aReader,
     {
         const char* next = tmp;
 
-        while( *next && isspace( *next ) )
+        while( *next && IsASCIISpace( *next ) )
             next++;
 
         *aNextToken = next;
@@ -395,7 +412,7 @@ static void parseQuotedString( wxString& aString, FILE_LINE_READER& aReader,
 
     const char* tmp = aCurrentToken;
 
-    while( *tmp && isspace( *tmp ) )
+    while( *tmp && IsASCIISpace( *tmp ) )
         tmp++;
 
     if( !*tmp )
@@ -573,8 +590,6 @@ SCH_SHEET* SCH_LEGACY_PLUGIN::Load( const wxString& aFileName, KIWAY* aKiway,
                                     SCH_SHEET* aAppendToMe, const PROPERTIES* aProperties )
 {
     wxASSERT( !aFileName || aKiway != NULL );
-
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
     SCH_SHEET*  sheet;
 
     wxFileName fn = aFileName;
@@ -1043,11 +1058,11 @@ SCH_BITMAP* SCH_LEGACY_PLUGIN::loadBitmap( FILE_LINE_READER& aReader )
                 // and put it in memory stream buffer
                 int len = strlen( line );
 
-                for( ; len > 0 && !isspace( *line ); len -= 3, line += 3 )
+                for( ; len > 0 && !IsASCIISpace( *line ); len -= 3, line += 3 )
                 {
                     int value = 0;
 
-                    if( sscanf( line, "%X", &value ) == 1 )
+                    if( standalone_sscanf( line, "%X", &value ) == 1 )
                         stream.PutC( (char) value );
                     else
                         THROW_IO_ERROR( "invalid PNG data" );
@@ -2203,7 +2218,7 @@ void SCH_LEGACY_PLUGIN_CACHE::Load()
     {
         line = reader.Line();
 
-        if( *line == '#' || isspace( *line ) )  // Skip comments and blank lines.
+        if( *line == '#' || IsASCIISpace( *line ) )  // Skip comments and blank lines.
             continue;
 
         // Headers where only supported in older library file formats.
@@ -2550,7 +2565,7 @@ void SCH_LEGACY_PLUGIN_CACHE::loadField( std::unique_ptr< LIB_PART >& aPart,
 
     int         id;
 
-    if( sscanf( line + 1, "%d", &id ) != 1 || id < 0 )
+    if( standalone_sscanf( line + 1, "%d", &id ) != 1 || id < 0 )
         SCH_PARSE_ERROR( _( "invalid field ID" ), aReader, line + 1 );
 
     std::unique_ptr< LIB_FIELD > field( new LIB_FIELD( aPart.get(), id ) );
@@ -3428,8 +3443,6 @@ int SCH_LEGACY_PLUGIN::GetModifyHash() const
 size_t SCH_LEGACY_PLUGIN::GetSymbolLibCount( const wxString&   aLibraryPath,
                                              const PROPERTIES* aProperties )
 {
-    LOCALE_IO toggle;
-
     m_props = aProperties;
 
     cacheLib( aLibraryPath );
@@ -3442,8 +3455,6 @@ void SCH_LEGACY_PLUGIN::EnumerateSymbolLib( wxArrayString&    aAliasNameList,
                                             const wxString&   aLibraryPath,
                                             const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     m_props = aProperties;
 
     cacheLib( aLibraryPath );
@@ -3459,8 +3470,6 @@ void SCH_LEGACY_PLUGIN::EnumerateSymbolLib( std::vector<LIB_ALIAS*>& aAliasList,
                                             const wxString&   aLibraryPath,
                                             const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     m_props = aProperties;
 
     cacheLib( aLibraryPath );
@@ -3475,8 +3484,6 @@ void SCH_LEGACY_PLUGIN::EnumerateSymbolLib( std::vector<LIB_ALIAS*>& aAliasList,
 LIB_ALIAS* SCH_LEGACY_PLUGIN::LoadSymbol( const wxString& aLibraryPath, const wxString& aAliasName,
                                           const PROPERTIES* aProperties )
 {
-    LOCALE_IO toggle;     // toggles on, then off, the C locale.
-
     m_props = aProperties;
 
     cacheLib( aLibraryPath );
@@ -3541,8 +3548,6 @@ void SCH_LEGACY_PLUGIN::CreateSymbolLib( const wxString& aLibraryPath,
             _( "symbol library '%s' already exists, cannot create a new library" ),
             aLibraryPath.GetData() ) );
     }
-
-    LOCALE_IO toggle;
 
     m_props = aProperties;
 
