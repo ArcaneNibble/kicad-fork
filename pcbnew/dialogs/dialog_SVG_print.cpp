@@ -357,8 +357,6 @@ bool DIALOG_SVG_PRINT::CreateSVGFile( const wxString& aFullFileName, bool aOnlyO
         m_board->SetAuxOrigin( origin );
     }
 
-    LOCALE_IO    toggle;
-
     SVG_PLOTTER* plotter = (SVG_PLOTTER*) StartPlotBoard( m_board,
                      &plot_opts, UNDEFINED_LAYER, aFullFileName, wxEmptyString );
 

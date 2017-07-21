@@ -836,8 +836,6 @@ void DIALOG_PLOT::Plot( wxCommandEvent& event )
                            m_board->GetLayerName( layer ),
                            file_ext );
 
-        LOCALE_IO toggle;
-
         BOARD*      board = m_parent->GetBoard();
         PLOTTER*    plotter = StartPlotBoard( board, &m_plotOpts, layer, fn.GetFullPath(), wxEmptyString );
 
