@@ -20,6 +20,7 @@ int standalone_cbprintf(void *restrict cb_state,
 
 int standalone_fprintf(FILE *restrict f, const char *restrict fmt, ...);
 int standalone_snprintf(char *restrict s, size_t n, const char *restrict fmt, ...);
+int standalone_vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap);
 
 #ifdef __cplusplus
 }

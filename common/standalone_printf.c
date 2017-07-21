@@ -771,6 +771,14 @@ int standalone_snprintf(char *restrict s, size_t n, const char *restrict fmt, ..
 {
 	int ret;
 	va_list ap;
+	va_start(ap, fmt);
+	ret = standalone_vsnprintf(s, n, fmt, ap);
+	va_end(ap);
+	return ret;
+}
+
+int standalone_vsnprintf(char *restrict s, size_t n, const char *restrict fmt, va_list ap)
+{
 	char dummy[1];
 	SNPRINTF_STATE c = { .s = n ? s : dummy, .n = n ? n-1 : 0 };
 
@@ -780,8 +788,5 @@ int standalone_snprintf(char *restrict s, size_t n, const char *restrict fmt, ..
 	}
 
 	*c.s = 0;
-	va_start(ap, fmt);
-	ret = standalone_vcbprintf(&c, snprintf_out, fmt, ap);
-	va_end(ap);
-	return ret;
+	return standalone_vcbprintf(&c, snprintf_out, fmt, ap);
 }
