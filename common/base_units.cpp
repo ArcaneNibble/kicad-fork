@@ -39,6 +39,7 @@
 #include <class_title_block.h>
 #include <common.h>
 #include <base_units.h>
+#include <standalone_printf.h>
 
 
 #if defined( PCBNEW ) || defined( CVPCB ) || defined( EESCHEMA ) || defined( GERBVIEW ) || defined( PL_EDITOR )
@@ -57,6 +58,8 @@
 // this helper function uses the %f format when needed, or %g when %f is
 // not well working and then removes trailing 0
 
+// This function is _not_ sensitive to locale.
+
 std::string Double2Str( double aValue )
 {
     char    buf[50];
@@ -66,7 +69,7 @@ std::string Double2Str( double aValue )
     {
         // For these small values, %f works fine,
         // and %g gives an exponent
-        len = sprintf( buf,  "%.16f", aValue );
+        len = standalone_snprintf( buf, sizeof(buf),  "%.16f", aValue );
 
         while( --len > 0 && buf[len] == '0' )
             buf[len] = '\0';
@@ -80,7 +83,7 @@ std::string Double2Str( double aValue )
     {
         // For these values, %g works fine, and sometimes %f
         // gives a bad value (try aValue = 1.222222222222, with %.16f format!)
-        len = sprintf( buf, "%.16g", aValue );
+        len = standalone_snprintf( buf, sizeof(buf), "%.16g", aValue );
     }
 
     return std::string( buf, len );

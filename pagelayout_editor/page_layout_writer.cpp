@@ -185,8 +185,6 @@ void WORKSHEET_LAYOUT_IO::Format( WORKSHEET_DATAITEM* aItem, int aNestLevel ) co
 
 void WORKSHEET_LAYOUT_IO::Format( WORKSHEET_LAYOUT* aPageLayout ) const
 {
-    LOCALE_IO   toggle;     // switch on/off the locale "C" notation
-
     m_out->Print( 0, "(page_layout\n" );
 
     // Setup
