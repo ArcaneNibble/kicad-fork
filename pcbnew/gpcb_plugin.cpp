@@ -975,7 +975,6 @@ void GPCB_PLUGIN::FootprintEnumerate( wxArrayString&    aFootprintNames,
                                       const wxString&   aLibraryPath,
                                       const PROPERTIES* aProperties )
 {
-    LOCALE_IO     toggle;     // toggles on, then off, the C locale.
     wxDir         dir( aLibraryPath );
 
     if( !dir.IsOpened() )
@@ -1014,8 +1013,6 @@ void GPCB_PLUGIN::FootprintEnumerate( wxArrayString&    aFootprintNames,
 MODULE* GPCB_PLUGIN::FootprintLoad( const wxString& aLibraryPath, const wxString& aFootprintName,
                                     const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     init( aProperties );
 
     cacheLib( aLibraryPath, aFootprintName );
@@ -1037,8 +1034,6 @@ MODULE* GPCB_PLUGIN::FootprintLoad( const wxString& aLibraryPath, const wxString
 void GPCB_PLUGIN::FootprintDelete( const wxString& aLibraryPath, const wxString& aFootprintName,
                                    const PROPERTIES* aProperties )
 {
-    LOCALE_IO   toggle;     // toggles on, then off, the C locale.
-
     init( aProperties );
 
     cacheLib( aLibraryPath );
@@ -1132,8 +1127,6 @@ bool GPCB_PLUGIN::FootprintLibDelete( const wxString& aLibraryPath, const PROPER
 
 bool GPCB_PLUGIN::IsFootprintLibWritable( const wxString& aLibraryPath )
 {
-    LOCALE_IO   toggle;
-
     init( NULL );
 
     cacheLib( aLibraryPath );

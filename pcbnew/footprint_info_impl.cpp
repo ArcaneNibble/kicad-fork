@@ -170,14 +170,7 @@ bool FOOTPRINT_LIST_IMPL::JoinWorkers()
     m_threads.clear();
     m_queue_in.clear();
 
-    LOCALE_IO toggle_locale;
-
-    // Parse the footprints in parallel. WARNING! This requires changing the locale, which is
-    // GLOBAL. It is only threadsafe to construct the LOCALE_IO before the threads are created,
-    // destroy it after they finish, and block the main (GUI) thread while they work. Any deviation
-    // from this will cause nasal demons.
-    //
-    // TODO: blast LOCALE_IO into the sun
+    // Parse the footprints in parallel
 
     SYNC_QUEUE<std::unique_ptr<FOOTPRINT_INFO>> queue_parsed;
     std::vector<std::thread>                    threads;

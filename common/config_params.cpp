@@ -31,6 +31,8 @@
 #include <gestfich.h>
 #include <wxstruct.h>
 #include <config_params.h>
+#include <standalone_printf.h>
+#include <standalone_printf_extra.h>
 
 #include <wx/apptrait.h>
 #include <wx/stdpaths.h>
@@ -127,10 +129,10 @@ void ConfigBaseWriteDouble( wxConfigBase* aConfig, const wxString& aKey, double 
     // Use a single strategy, regardless of wx version.
     // Want C locale float string.
 
-    LOCALE_IO   toggle;
-    wxString    tnumber = wxString::Format( wxT( "%.16g" ), aValue );
+    std::string tnumber;
+    standalone_stdstringprintf( &tnumber, "%.16g", aValue );
 
-    aConfig->Write( aKey, tnumber );
+    aConfig->Write( aKey, tnumber.c_str() );
 }
 
 

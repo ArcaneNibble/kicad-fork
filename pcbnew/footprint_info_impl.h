@@ -30,8 +30,6 @@
 #include <footprint_info.h>
 #include <sync_queue.h>
 
-class LOCALE_IO;
-
 class FOOTPRINT_INFO_IMPL : public FOOTPRINT_INFO
 {
 public:
