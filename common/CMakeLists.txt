@@ -290,6 +290,9 @@ set( COMMON_SRCS
     wx_status_popup.cpp
     xnode.cpp
     zoom.cpp
+    wtfnicode.c
+    standalone_printf.c
+    standalone_scanf.c
     )
 
 if( TRUE OR NOT USE_KIWAY_DLLS )
