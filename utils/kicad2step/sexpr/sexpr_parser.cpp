@@ -22,6 +22,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <stdlib.h>     /* strtod */
+#include <standalone_scanf.h>
 
 #include <fstream>
 #include <streambuf>
@@ -150,13 +151,13 @@ namespace SEXPR
 
                         if( tmp.find( '.' ) != std::string::npos )
                         {
-                            res = new SEXPR_DOUBLE( strtod( tmp.c_str(), NULL ), m_lineNumber );
+                            res = new SEXPR_DOUBLE( standalone_strtod( tmp.c_str(), NULL ), m_lineNumber );
                             //floating point type
                         }
                         else
                         {
                             res = new SEXPR_INTEGER(
-                                strtoll( tmp.c_str(), NULL, 0 ), m_lineNumber );
+                                standalone_strtoll( tmp.c_str(), NULL, 0 ), m_lineNumber );
                         }
 
                         std::advance( it, closingPos - startPos );

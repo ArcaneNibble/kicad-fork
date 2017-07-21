@@ -29,6 +29,7 @@
 #include <plot_common.h>
 #include <macros.h>
 #include <convert_to_biu.h>
+#include <standalone_scanf.h>
 
 
 #define PLOT_LINEWIDTH_MIN        (0.02*IU_PER_MM)  // min value for default line thickness
@@ -552,7 +553,7 @@ double PCB_PLOT_PARAMS_PARSER::parseDouble()
     if( token != T_NUMBER )
         Expecting( T_NUMBER );
 
-    double val = strtod( CurText(), NULL );
+    double val = standalone_strtod( CurText(), NULL );
 
     return val;
 }
