@@ -114,9 +114,9 @@ wxPoint GERBER_FILE_IMAGE::ReadXYCoord( char*& Text )
             {
                 // When X or Y values are float numbers, they are given in mm or inches
                 if( m_GerbMetric )  // units are mm
-                    current_coord = KiROUND( atof( line ) * IU_PER_MILS / 0.0254 );
+                    current_coord = KiROUND( standalone_strtod( line, 0 ) * IU_PER_MILS / 0.0254 );
                 else    // units are inches
-                    current_coord = KiROUND( atof( line ) * IU_PER_MILS * 1000 );
+                    current_coord = KiROUND( standalone_strtod( line, 0 ) * IU_PER_MILS * 1000 );
             }
             else
             {
@@ -135,7 +135,7 @@ wxPoint GERBER_FILE_IMAGE::ReadXYCoord( char*& Text )
                     *text = 0;
                 }
 
-                current_coord = atoi( line );
+                current_coord = standalone_strtol( line, 0, 10 );
                 double real_scale = scale_list[fmt_scale];
 
                 if( m_GerbMetric )
@@ -208,9 +208,9 @@ wxPoint GERBER_FILE_IMAGE::ReadIJCoord( char*& Text )
             {
                 // When X or Y values are float numbers, they are given in mm or inches
                 if( m_GerbMetric )  // units are mm
-                    current_coord = KiROUND( atof( line ) * IU_PER_MILS / 0.0254 );
+                    current_coord = KiROUND( standalone_strtod( line, 0 ) * IU_PER_MILS / 0.0254 );
                 else    // units are inches
-                    current_coord = KiROUND( atof( line ) * IU_PER_MILS * 1000 );
+                    current_coord = KiROUND( standalone_strtod( line, 0 ) * IU_PER_MILS * 1000 );
             }
             else
             {
@@ -230,7 +230,7 @@ wxPoint GERBER_FILE_IMAGE::ReadIJCoord( char*& Text )
                     *text = 0;
                 }
 
-                current_coord = atoi( line );
+                current_coord = standalone_strtol( line, 0, 10 );
 
                 double real_scale = scale_list[fmt_scale];
 

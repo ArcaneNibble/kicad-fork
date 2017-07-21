@@ -222,8 +222,6 @@ bool EXCELLON_IMAGE::LoadFile( const wxString & aFullFileName )
 
     m_FileName = aFullFileName;
 
-    LOCALE_IO toggleIo;
-
     // FILE_LINE_READER will close the file.
     FILE_LINE_READER excellonReader( m_Current_File, m_FileName );
 
